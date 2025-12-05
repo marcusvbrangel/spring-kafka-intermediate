@@ -10,6 +10,8 @@ import java.util.UUID;
 @Service
 public class PaymentService {
 
+    // repository ????????
+
     private final PaymentApprovedProducer paymentApprovedProducer;
 
     public PaymentService(PaymentApprovedProducer paymentApprovedProducer) {

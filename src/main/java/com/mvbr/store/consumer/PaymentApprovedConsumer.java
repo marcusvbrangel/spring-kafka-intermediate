@@ -18,6 +18,14 @@ public class PaymentApprovedConsumer {
     )
     public void handlePaymentApproved(PaymentApprovedEvent event) {
 
+        // Handle deserialization failures gracefully
+        if (event == null) {
+            System.err.println("\n===== DESERIALIZATION ERROR =====");
+            System.err.println("Received null event - skipping bad message");
+            System.err.println("=================================\n");
+            return;
+        }
+
         System.out.println("\n===== PAYMENT APPROVED EVENT RECEIVED =====");
         System.out.println("eventId:   " + event.eventId());
         System.out.println("paymentId: " + event.paymentId());
