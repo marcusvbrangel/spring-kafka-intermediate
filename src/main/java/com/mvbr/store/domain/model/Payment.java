@@ -1,16 +1,23 @@
 package com.mvbr.store.domain.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
+@Entity
 public class Payment {
 
-    private final String paymentId;
-    private final String userId;
-    private final BigDecimal amount;
-    private final String currency;
+    @Id
+    private String paymentId;
+    private String userId;
+    private BigDecimal amount;
+    private String currency;
     private PaymentStatus status;
-    private final long createdAt;
+    private long createdAt;
+
+    public Payment() {}
 
     public Payment(String paymentId,
                    String userId,
@@ -38,20 +45,13 @@ public class Payment {
     }
 
     // =======================================
-    //      NOVOS MÉTODOS PARA SUA REGRA
+    //      BUSINESS LOGIC METHODS
     // =======================================
 
-    /** Regra extra: pagamento válido significa "construído corretamente" */
-    public boolean isValid() {
-        return this.paymentId != null &&
-                this.userId != null &&
-                this.amount != null &&
-                this.amount.compareTo(BigDecimal.ZERO) > 0 &&
-                this.currency != null &&
-                !this.currency.isBlank();
-    }
-
-    /** Executa uma aprovação explícita, usada pelo service */
+    /**
+     * Aprova o pagamento.
+     * Valida estado antes de aprovar (não pode aprovar um pagamento cancelado).
+     */
     public void markApproved() {
         if (status == PaymentStatus.CANCELED)
             throw new IllegalStateException("Cannot approve a canceled payment");
@@ -59,10 +59,10 @@ public class Payment {
         this.status = PaymentStatus.APPROVED;
     }
 
-    // =======================================
-    // Métodos existentes continuam funcionando
-    // =======================================
-
+    /**
+     * Cancela o pagamento.
+     * Valida estado antes de cancelar (não pode cancelar um pagamento aprovado).
+     */
     public void cancel() {
         if (status == PaymentStatus.APPROVED)
             throw new IllegalStateException("Cannot cancel an approved payment");

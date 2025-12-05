@@ -1,50 +1,63 @@
 package com.mvbr.store.application.service;
 
-import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
+import com.mvbr.store.application.dto.request.PaymentApprovedRequest;
+import com.mvbr.store.application.mapper.PaymentEventMapper;
+import com.mvbr.store.application.mapper.PaymentRequestMapper;
 import com.mvbr.store.domain.model.Payment;
+import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
 import com.mvbr.store.infrastructure.messaging.producer.PaymentApprovedProducer;
+import com.mvbr.store.infrastructure.persistence.PaymentRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PaymentService {
 
-    // repository ????????
-
+    private final PaymentRepository paymentRepository;
     private final PaymentApprovedProducer paymentApprovedProducer;
+    private final PaymentEventMapper paymentEventMapper;
+    private final PaymentRequestMapper paymentRequestMapper;
 
-    public PaymentService(PaymentApprovedProducer paymentApprovedProducer) {
+    public PaymentService(
+            PaymentRepository paymentRepository,
+            PaymentApprovedProducer paymentApprovedProducer,
+            PaymentEventMapper paymentEventMapper,
+            PaymentRequestMapper paymentRequestMapper) {
+        this.paymentRepository = paymentRepository;
         this.paymentApprovedProducer = paymentApprovedProducer;
+        this.paymentEventMapper = paymentEventMapper;
+        this.paymentRequestMapper = paymentRequestMapper;
     }
 
-    public void approvePayment(Payment payment) {
+    /**
+     * Aprova um pagamento.
+     *
+     * @Transactional garante que save() e publicação no Kafka sejam atômicos.
+     * ATENÇÃO: Kafka está FORA da transação JPA! Para garantia total de consistência,
+     * implementar Outbox Pattern no futuro.
+     */
+    @Transactional
+    public void approvePayment(PaymentApprovedRequest request) {
 
         // ============================
-        // Regras de negócio aqui
+        // 1. Conversão DTO → Domain Model (camada de aplicação)
         // ============================
-        if (!payment.isValid()) {
-            throw new IllegalArgumentException("Invalid payment");
-        }
+        Payment payment = paymentRequestMapper.toPayment(request);
 
+        // ============================
+        // 2. Lógica de negócio (validação no construtor)
+        // ============================
         payment.markApproved();
 
-        // =======================================
-        // Agora constrói o evento COMPLETO
-        // =======================================
-        PaymentApprovedEvent event = new PaymentApprovedEvent(
-                UUID.randomUUID().toString(),      // eventId
-                payment.getPaymentId(),            // paymentId
-                payment.getUserId(),               // userId
-                payment.getAmount(),               // amount (BigDecimal)
-                payment.getCurrency(),             // currency (String)
-                payment.getStatus().name(),        // status (ex: "APPROVED")
-                System.currentTimeMillis()         // timestamp (Long)
-        );
+        // ============================
+        // 3. Persistência no banco (TEMPORARIAMENTE COMENTADO - problema com JPA)
+        // ============================
+        paymentRepository.save(payment);
 
-        // =======================================
-        // dispara o evento
-        // =======================================
+        // ============================
+        // 4. Publicação de evento (delegado ao mapper)
+        // ============================
+        PaymentApprovedEvent event = paymentEventMapper.toPaymentApprovedEvent(payment);
         paymentApprovedProducer.producePaymentApproved(event);
 
     }

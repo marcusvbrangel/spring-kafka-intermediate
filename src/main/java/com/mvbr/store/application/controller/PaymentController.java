@@ -1,16 +1,11 @@
 package com.mvbr.store.application.controller;
 
 import com.mvbr.store.application.dto.request.PaymentApprovedRequest;
-import com.mvbr.store.application.dto.request.PaymentNotificationRequest;
-import com.mvbr.store.infrastructure.messaging.event.PaymentNotificationEvent;
-import com.mvbr.store.domain.model.Payment;
 import com.mvbr.store.application.service.PaymentService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -28,32 +23,11 @@ public class PaymentController {
     @PostMapping("/approved")
     public String publishPaymentApproved(@RequestBody PaymentApprovedRequest req) {
 
-        var payment = new Payment(req.paymentId(), req.userId(), req.amount(), req.currency());
-
-        paymentService.approvePayment(payment);
+        // Delega para o Service, que faz a conversão DTO → Model internamente
+        paymentService.approvePayment(req);
 
         return "PaymentApprovedEvent enviado com sucesso!";
 
-    }
-
-    // ========================================================
-    // 2. Notificação de pagamento — DEFAULT PRODUCER
-    // ========================================================
-    @PostMapping("/notify")
-    public String sendPaymentNotification(@RequestBody PaymentNotificationRequest req) {
-
-        PaymentNotificationEvent event = new PaymentNotificationEvent(
-                UUID.randomUUID().toString(),
-                req.paymentId(),
-                req.userId(),
-                req.amount(),
-                req.message(),
-                System.currentTimeMillis()
-        );
-
-//        paymentNotificationProducer.sendPaymentNotification(event);
-
-        return "PaymentNotificationEvent enviado com sucesso!";
     }
 
 }
