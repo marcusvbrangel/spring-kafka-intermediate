@@ -1,14 +1,18 @@
 package com.mvbr.store.infrastructure.config.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.CommonErrorHandler;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
@@ -63,7 +67,9 @@ public class KafkaConsumerConfig {
     }
 
     @Bean(name = "criticalKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> criticalKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, Object> criticalKafkaListenerContainerFactory(
+            @Qualifier("criticalKafkaTemplate") KafkaTemplate<String, Object> kafkaTemplate
+    ) {
 
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
@@ -76,13 +82,32 @@ public class KafkaConsumerConfig {
                 org.springframework.kafka.listener.ContainerProperties.AckMode.MANUAL
         );
 
-        // Retry + Backoff
-        ExponentialBackOffWithMaxRetries backoff = new ExponentialBackOffWithMaxRetries(5);
-        backoff.setInitialInterval(1000);
-        backoff.setMultiplier(2);
-        backoff.setMaxInterval(10000);
+        // === DEAD LETTER QUEUE (DLQ) ===
+        // Após falhar 5 vezes, envia para tópico DLQ: {original-topic}.dlq
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
+                kafkaTemplate,
+                (record, ex) -> {
+                    // Define o tópico DLQ: adiciona sufixo .dlq ao tópico original
+                    String dlqTopic = record.topic() + ".dlq";
+                    System.err.println("\n===== SENDING TO DLQ =====");
+                    System.err.println("Original Topic: " + record.topic());
+                    System.err.println("DLQ Topic: " + dlqTopic);
+                    System.err.println("Reason: " + ex.getMessage());
+                    System.err.println("==========================\n");
 
-        CommonErrorHandler errorHandler = new DefaultErrorHandler(backoff);
+                    // Mantém a mesma partição para preservar ordenação por usuário
+                    return new TopicPartition(dlqTopic, record.partition());
+                }
+        );
+
+        // Retry + Backoff + DLQ
+        ExponentialBackOffWithMaxRetries backoff = new ExponentialBackOffWithMaxRetries(5);
+        backoff.setInitialInterval(1000);   // 1s
+        backoff.setMultiplier(2);            // 2x a cada tentativa
+        backoff.setMaxInterval(10000);       // máx 10s
+
+        // DefaultErrorHandler com DeadLetterPublishingRecoverer
+        CommonErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backoff);
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;

@@ -4,3 +4,27 @@ spring:
 
 server:
   port: 5050
+
+# =============================================================================================
+# DLQ REPROCESSOR CONFIGURATION
+# =============================================================================================
+# Controla se o DLQReprocessor deve estar ativo
+#
+# IMPORTANTE:
+# - false (padrão): DLQReprocessor NÃO inicia - mensagens ficam na DLQ
+# - true: DLQReprocessor ATIVO - republica mensagens automaticamente
+#
+# QUANDO HABILITAR (true):
+# ✅ Após corrigir bug no PaymentApprovedConsumer e fazer deploy
+# ✅ Após serviço externo voltar (ex: API de notificação)
+# ✅ Para reprocessar mensagens após incidente resolvido
+#
+# QUANDO MANTER DESABILITADO (false):
+# ❌ Enquanto o bug que causou a falha ainda existe (evita loop infinito!)
+# ❌ Durante investigação de problemas
+# ❌ Em ambientes de desenvolvimento/testes (use reprocessamento manual)
+#
+# =============================================================================================
+dlq:
+  reprocessor:
+    enabled: false  # DEFAULT: false (segurança - evita loops acidentais)
