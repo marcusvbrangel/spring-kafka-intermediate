@@ -2,6 +2,7 @@ package com.mvbr.store.infrastructure.config.kafka;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -15,6 +16,54 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfig {
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    // Critical producer settings
+    @Value("${spring.kafka.producer.critical.acks}")
+    private String criticalAcks;
+
+    @Value("${spring.kafka.producer.critical.enable-idempotence}")
+    private Boolean criticalEnableIdempotence;
+
+    @Value("${spring.kafka.producer.critical.retries}")
+    private Integer criticalRetries;
+
+    @Value("${spring.kafka.producer.critical.delivery-timeout-ms}")
+    private Integer criticalDeliveryTimeoutMs;
+
+    @Value("${spring.kafka.producer.critical.request-timeout-ms}")
+    private Integer criticalRequestTimeoutMs;
+
+    @Value("${spring.kafka.producer.critical.max-in-flight-requests-per-connection}")
+    private Integer criticalMaxInFlightRequests;
+
+    @Value("${spring.kafka.producer.critical.compression-type}")
+    private String criticalCompressionType;
+
+    @Value("${spring.kafka.producer.critical.linger-ms}")
+    private Integer criticalLingerMs;
+
+    @Value("${spring.kafka.producer.critical.batch-size}")
+    private Integer criticalBatchSize;
+
+    // Default producer settings
+    @Value("${spring.kafka.producer.default.acks}")
+    private String defaultAcks;
+
+    @Value("${spring.kafka.producer.default.compression-type}")
+    private String defaultCompressionType;
+
+    // Fast producer settings
+    @Value("${spring.kafka.producer.fast.acks}")
+    private String fastAcks;
+
+    @Value("${spring.kafka.producer.fast.linger-ms}")
+    private Integer fastLingerMs;
+
+    @Value("${spring.kafka.producer.fast.batch-size}")
+    private Integer fastBatchSize;
+
     // =============================
     // 1 - CRITICAL PRODUCER
     // =============================
@@ -22,25 +71,25 @@ public class KafkaProducerConfig {
     public ProducerFactory<String,Object> criticalProducerFactory() {
 
         Map<String,Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
         // === DURABILIDADE MÁXIMA ===
-        config.put(ProducerConfig.ACKS_CONFIG, "all");                     // líder + réplicas confirmam
-        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);        // sem duplicatas
+        config.put(ProducerConfig.ACKS_CONFIG, criticalAcks);                                  // líder + réplicas confirmam
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, criticalEnableIdempotence);      // sem duplicatas
 
         // === RETRY & TIMEOUT ===
-        config.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);      // tenta até conseguir ou dar timeout
-        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);     // 2 minutos max
-        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000);       // 30s por request
+        config.put(ProducerConfig.RETRIES_CONFIG, criticalRetries);                            // tenta até conseguir ou dar timeout
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, criticalDeliveryTimeoutMs);      // 2 minutos max
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, criticalRequestTimeoutMs);        // 30s por request
 
         // === ORDENAÇÃO + THROUGHPUT ===
         // Kafka 0.11+ com idempotence=true permite até 5 e mantém ordem!
-        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, criticalMaxInFlightRequests);
 
         // === PERFORMANCE ===
-        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");      // boa compressão + rápido
-        config.put(ProducerConfig.LINGER_MS_CONFIG, 10);                   // agrupa até 10ms
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);               // 16KB batch
+        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, criticalCompressionType);           // boa compressão + rápido
+        config.put(ProducerConfig.LINGER_MS_CONFIG, criticalLingerMs);                        // agrupa até 10ms
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, criticalBatchSize);                      // 16KB batch
 
         // === SERIALIZERS ===
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -62,9 +111,9 @@ public class KafkaProducerConfig {
     public ProducerFactory<String, Object> defaultProducerFactory() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ProducerConfig.ACKS_CONFIG, 1);
-        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4");
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.ACKS_CONFIG, defaultAcks);
+        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, defaultCompressionType);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);
@@ -83,10 +132,10 @@ public class KafkaProducerConfig {
     public ProducerFactory<String, Object> fastProducerFactory() {
 
         Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ProducerConfig.ACKS_CONFIG, 0);
-        config.put(ProducerConfig.LINGER_MS_CONFIG, 50);
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, 32768);
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.ACKS_CONFIG, fastAcks);
+        config.put(ProducerConfig.LINGER_MS_CONFIG, fastLingerMs);
+        config.put(ProducerConfig.BATCH_SIZE_CONFIG, fastBatchSize);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);

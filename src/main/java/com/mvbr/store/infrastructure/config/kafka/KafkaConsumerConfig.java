@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -25,18 +26,64 @@ import java.util.Map;
 @EnableKafka
 public class KafkaConsumerConfig {
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    @Value("${spring.kafka.consumer.auto-offset-reset}")
+    private String autoOffsetReset;
+
+    // Critical consumer settings
+    @Value("${spring.kafka.consumer.critical.enable-auto-commit}")
+    private Boolean criticalEnableAutoCommit;
+
+    @Value("${spring.kafka.consumer.critical.max-poll-records}")
+    private Integer criticalMaxPollRecords;
+
+    @Value("${spring.kafka.consumer.critical.concurrency}")
+    private Integer criticalConcurrency;
+
+    // Default consumer settings
+    @Value("${spring.kafka.consumer.default.enable-auto-commit}")
+    private Boolean defaultEnableAutoCommit;
+
+    @Value("${spring.kafka.consumer.default.concurrency}")
+    private Integer defaultConcurrency;
+
+    // Fast consumer settings
+    @Value("${spring.kafka.consumer.fast.enable-auto-commit}")
+    private Boolean fastEnableAutoCommit;
+
+    @Value("${spring.kafka.consumer.fast.max-poll-records}")
+    private Integer fastMaxPollRecords;
+
+    @Value("${spring.kafka.consumer.fast.concurrency}")
+    private Integer fastConcurrency;
+
+    // Error handling settings
+    @Value("${spring.kafka.error.retry.max-attempts}")
+    private Integer retryMaxAttempts;
+
+    @Value("${spring.kafka.error.retry.initial-interval-ms}")
+    private Long retryInitialIntervalMs;
+
+    @Value("${spring.kafka.error.retry.multiplier}")
+    private Double retryMultiplier;
+
+    @Value("${spring.kafka.error.retry.max-interval-ms}")
+    private Long retryMaxIntervalMs;
+
     // =============================
     // COMMON CONFIG FOR ALL
     // =============================
     private Map<String, Object> baseConfig() {
         Map<String, Object> props = new HashMap<>();
 
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
         // === OFFSET RESET STRATEGY ===
         // "latest" = lê apenas mensagens NOVAS (após o consumer conectar)
         // "earliest" = lê TODAS as mensagens desde o início do tópico
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
 
         // Wrap deserializers with ErrorHandlingDeserializer to handle bad messages gracefully
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
@@ -60,8 +107,8 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, Object> criticalConsumerFactory() {
         Map<String, Object> props = baseConfig();
 
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, criticalEnableAutoCommit);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, criticalMaxPollRecords);
 
         return new DefaultKafkaConsumerFactory<>(props);
     }
@@ -75,7 +122,7 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(criticalConsumerFactory());
-        factory.setConcurrency(1);
+        factory.setConcurrency(criticalConcurrency);
 
         // === CONFIG CORRETA PARA SPRING 3.x ===
         factory.getContainerProperties().setAckMode(
@@ -83,7 +130,7 @@ public class KafkaConsumerConfig {
         );
 
         // === DEAD LETTER QUEUE (DLQ) ===
-        // Após falhar 5 vezes, envia para tópico DLQ: {original-topic}.dlq
+        // Após falhar N vezes, envia para tópico DLQ: {original-topic}.dlq
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
                 (record, ex) -> {
@@ -101,10 +148,10 @@ public class KafkaConsumerConfig {
         );
 
         // Retry + Backoff + DLQ
-        ExponentialBackOffWithMaxRetries backoff = new ExponentialBackOffWithMaxRetries(5);
-        backoff.setInitialInterval(1000);   // 1s
-        backoff.setMultiplier(2);            // 2x a cada tentativa
-        backoff.setMaxInterval(10000);       // máx 10s
+        ExponentialBackOffWithMaxRetries backoff = new ExponentialBackOffWithMaxRetries(retryMaxAttempts);
+        backoff.setInitialInterval(retryInitialIntervalMs);
+        backoff.setMultiplier(retryMultiplier);
+        backoff.setMaxInterval(retryMaxIntervalMs);
 
         // DefaultErrorHandler com DeadLetterPublishingRecoverer
         CommonErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backoff);
@@ -119,7 +166,7 @@ public class KafkaConsumerConfig {
     @Bean
     public ConsumerFactory<String, Object> defaultConsumerFactory() {
         Map<String, Object> props = baseConfig();
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, defaultEnableAutoCommit);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -130,7 +177,7 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(defaultConsumerFactory());
-        factory.setConcurrency(3);
+        factory.setConcurrency(defaultConcurrency);
 
         return factory;
     }
@@ -141,8 +188,8 @@ public class KafkaConsumerConfig {
     @Bean
     public ConsumerFactory<String, Object> fasterConsumerFactory() {
         Map<String, Object> props = baseConfig();
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, fastEnableAutoCommit);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, fastMaxPollRecords);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -153,7 +200,7 @@ public class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(fasterConsumerFactory());
-        factory.setConcurrency(8);
+        factory.setConcurrency(fastConcurrency);
 
         return factory;
     }
