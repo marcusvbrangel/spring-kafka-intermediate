@@ -1,4 +1,4 @@
-package com.mvbr.store.model;
+package com.mvbr.store.domain.model;
 
 import java.math.BigDecimal;
 import java.util.Objects;

@@ -1,4 +1,4 @@
-package com.mvbr.store.event;
+package com.mvbr.store.infrastructure.messaging.event;
 
 public record PaymentNotificationEvent(
         String eventId,

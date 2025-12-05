@@ -1,8 +1,8 @@
-package com.mvbr.store.service;
+package com.mvbr.store.application.service;
 
-import com.mvbr.store.event.PaymentApprovedEvent;
-import com.mvbr.store.model.Payment;
-import com.mvbr.store.producer.PaymentApprovedProducer;
+import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
+import com.mvbr.store.domain.model.Payment;
+import com.mvbr.store.infrastructure.messaging.producer.PaymentApprovedProducer;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

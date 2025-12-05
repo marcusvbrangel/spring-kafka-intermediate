@@ -1,4 +1,4 @@
-package com.mvbr.store.dto;
+package com.mvbr.store.application.dto.request;
 
 public record PaymentNotificationRequest(
         String paymentId,

@@ -1,10 +1,10 @@
-package com.mvbr.store.controller;
+package com.mvbr.store.application.controller;
 
-import com.mvbr.store.dto.PaymentApprovedRequest;
-import com.mvbr.store.dto.PaymentNotificationRequest;
-import com.mvbr.store.event.PaymentNotificationEvent;
-import com.mvbr.store.model.Payment;
-import com.mvbr.store.service.PaymentService;
+import com.mvbr.store.application.dto.request.PaymentApprovedRequest;
+import com.mvbr.store.application.dto.request.PaymentNotificationRequest;
+import com.mvbr.store.infrastructure.messaging.event.PaymentNotificationEvent;
+import com.mvbr.store.domain.model.Payment;
+import com.mvbr.store.application.service.PaymentService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,6 +1,6 @@
-package com.mvbr.store.producer;
+package com.mvbr.store.infrastructure.messaging.producer;
 
-import com.mvbr.store.event.PaymentNotificationEvent;
+import com.mvbr.store.infrastructure.messaging.event.PaymentNotificationEvent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;

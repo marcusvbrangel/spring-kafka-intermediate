@@ -1,4 +1,4 @@
-package com.mvbr.store.model;
+package com.mvbr.store.domain.model;
 
 public enum PaymentStatus {
     PENDING,

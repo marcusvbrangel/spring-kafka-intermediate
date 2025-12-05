@@ -1,6 +1,6 @@
-package com.mvbr.store.consumer;
+package com.mvbr.store.infrastructure.messaging.consumer;
 
-import com.mvbr.store.event.PaymentApprovedEvent;
+import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 

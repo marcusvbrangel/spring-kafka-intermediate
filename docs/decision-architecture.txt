@@ -1,0 +1,394 @@
+
+---------------------------------------------------------------------------------------------------------------
+
+
+ Layered Architecture → Hexagonal é uma migração natural e progressiva. Você está tomando a decisão certa!
+
+  ---
+  ✅ POR QUE ESSA ESCOLHA FAZ SENTIDO:
+
+  Agora (Layered):
+
+  - ✅ Estrutura clara: Application → Domain → Infrastructure
+  - ✅ Fácil de entender (camadas bem definidas)
+  - ✅ Melhora MUITO a organização atual
+  - ✅ Prepara o terreno para Hexagonal
+
+  Futuro (Hexagonal):
+
+  - ✅ Migração suave (só reorganizar pacotes + adicionar ports)
+  - ✅ Quando você entender melhor DDD
+  - ✅ Quando o projeto crescer e precisar de mais isolamento
+
+  ---
+  📦 ESTRUTURA LAYERED PARA SEU PROJETO
+
+  com.mvbr.store/
+  │
+  ├── application/                           ← Camada de Aplicação
+  │   │
+  │   ├── controller/                        ← REST API
+  │   │   └── PaymentController.java
+  │   │
+  │   ├── dto/                               ← DTOs de entrada/saída
+  │   │   ├── request/
+  │   │   │   ├── PaymentApprovedRequest.java
+  │   │   │   └── PaymentNotificationRequest.java
+  │   │   └── response/
+  │   │       └── PaymentResponse.java
+  │   │
+  │   └── service/                           ← Services (orquestração)
+  │       └── PaymentApplicationService.java
+  │
+  ├── domain/                                ← Camada de Domínio
+  │   │
+  │   ├── model/                             ← Entidades/Value Objects
+  │   │   ├── Payment.java
+  │   │   └── PaymentStatus.java
+  │   │
+  │   ├── event/                             ← Eventos de DOMÍNIO (internos)
+  │   │   └── PaymentApprovedDomainEvent.java
+  │   │
+  │   ├── service/                           ← Serviços de domínio
+  │   │   └── PaymentDomainService.java
+  │   │
+  │   └── repository/                        ← Interfaces (contratos)
+  │       └── PaymentRepository.java
+  │
+  └── infrastructure/                        ← Camada de Infraestrutura
+      │
+      ├── config/                            ← Configurações técnicas
+      │   ├── kafka/
+      │   │   ├── KafkaProducerConfig.java
+      │   │   └── KafkaConsumerConfig.java
+      │   └── web/
+      │       └── WebConfig.java
+      │
+      ├── messaging/                         ← Kafka (toda mensageria)
+      │   │
+      │   ├── event/                         ← Eventos do KAFKA (contratos externos)
+      │   │   ├── PaymentApprovedEvent.java
+      │   │   └── PaymentNotificationEvent.java
+      │   │
+      │   ├── producer/                      ← Produtores
+      │   │   ├── PaymentApprovedProducer.java
+      │   │   └── PaymentNotificationProducer.java
+      │   │
+      │   ├── consumer/                      ← Consumidores
+      │   │   ├── PaymentApprovedConsumer.java
+      │   │   └── PaymentNotificationConsumer.java
+      │   │
+      │   └── mapper/                        ← Conversão Domain ↔ Kafka Event
+      │       └── PaymentEventMapper.java
+      │
+      └── persistence/                       ← Persistência (quando tiver)
+          └── PaymentRepositoryImpl.java
+
+  ---
+  🔄 CAMINHO DE MIGRAÇÃO (Layered → Hexagonal)
+
+  Fase 1: Layered (AGORA)
+
+  application/
+    └── service/
+        └── PaymentApplicationService.java  ← Orquestra tudo
+
+  domain/
+    └── model/
+        └── Payment.java                    ← Lógica de negócio
+
+  infrastructure/
+    └── messaging/
+        └── producer/
+            └── PaymentApprovedProducer.java ← Envia para Kafka
+
+  Dependência: Application → Domain ← Infrastructure
+
+  ---
+  Fase 2: Hexagonal (FUTURO)
+
+  domain/
+    ├── model/
+    │   └── Payment.java
+    └── port/                              ← NOVO! Interfaces
+        └── PaymentEventPublisher.java    ← Contrato (sem implementação)
+
+  application/
+    └── usecase/
+        └── ApprovePaymentUseCase.java    ← Usa a interface (port)
+
+  infrastructure/
+    └── adapter/
+        └── messaging/
+            └── KafkaPaymentEventPublisher.java ← Implementa a interface
+
+  Dependência: Domain ← Application ← Infrastructure (inversão!)
+
+  ---
+  📋 O QUE VAI MUDAR NA PRÁTICA
+
+  Antes (estrutura atual flat):
+
+  com.mvbr.store/
+  ├── controller/PaymentController.java
+  ├── dto/PaymentApprovedRequest.java
+  ├── event/PaymentApprovedEvent.java      ← Confuso: domínio ou kafka?
+  ├── model/Payment.java
+  ├── producer/PaymentApprovedProducer.java
+  └── service/PaymentService.java
+
+  Problema: Tudo misturado, difícil saber o que é negócio vs tecnologia.
+
+  ---
+  Depois (Layered):
+
+  application/
+    ├── controller/PaymentController.java           ← Interface HTTP
+    ├── dto/request/PaymentApprovedRequest.java     ← Contrato REST
+    └── service/PaymentApplicationService.java      ← Orquestra
+
+  domain/
+    ├── model/Payment.java                          ← Lógica de negócio pura
+    └── event/PaymentApprovedDomainEvent.java       ← Evento interno (opcional)
+
+  infrastructure/
+    ├── config/kafka/KafkaProducerConfig.java       ← Configuração técnica
+    └── messaging/
+        ├── event/PaymentApprovedEvent.java         ← Contrato Kafka (JSON)
+        ├── producer/PaymentApprovedProducer.java   ← Implementação Kafka
+        └── mapper/PaymentEventMapper.java          ← Conversão Domain → Kafka
+
+  Benefício:
+  - ✅ Claro o que é cada coisa
+  - ✅ Domínio isolado (Payment não sabe de Kafka)
+  - ✅ Fácil de testar (camadas independentes)
+
+  ---
+  🎯 REGRAS DE DEPENDÊNCIA (CRUCIAL!)
+
+  ┌─────────────────────┐
+  │   Application       │  ← Pode depender de Domain
+  │   (controller,      │  ← NÃO pode depender de Infrastructure
+  │    service, dto)    │
+  └──────────┬──────────┘
+             │
+             ↓
+  ┌─────────────────────┐
+  │   Domain            │  ← NÃO depende de NADA!
+  │   (model, events,   │  ← Zero imports de Spring, Kafka, etc
+  │    repository iface)│
+  └──────────┬──────────┘
+             ↑
+             │
+  ┌─────────────────────┐
+  │  Infrastructure     │  ← Pode depender de Domain
+  │  (kafka, config,    │  ← Pode depender de Application (com cuidado)
+  │   persistence)      │
+  └─────────────────────┘
+
+  Na prática:
+
+  ✅ PERMITIDO:
+
+  // Application depende de Domain
+  package com.mvbr.store.application.service;
+
+  import com.mvbr.store.domain.model.Payment;  ✅
+  import com.mvbr.store.infrastructure.messaging.producer.PaymentApprovedProducer; ✅
+
+  ❌ PROIBIDO:
+
+  // Domain NÃO pode depender de Infrastructure!
+  package com.mvbr.store.domain.model;
+
+  import org.springframework.kafka.core.KafkaTemplate;  ❌ NUNCA!
+  import com.mvbr.store.infrastructure.config.KafkaProducerConfig; ❌ NUNCA!
+
+  ---
+  🔥 DIFERENÇAS IMPORTANTES
+
+  1. Eventos: Domain vs Infrastructure
+
+  | Tipo         | Onde fica                       | Propósito                              | Exemplo                    |
+  |--------------|---------------------------------|----------------------------------------|----------------------------|
+  | Domain Event | domain/event/                   | Comunicação interna, regras de negócio | PaymentApprovedDomainEvent |
+  | Kafka Event  | infrastructure/messaging/event/ | Contrato externo, JSON no tópico       | PaymentApprovedEvent       |
+
+  Diferença chave:
+  // Domain Event (interno)
+  package com.mvbr.store.domain.event;
+
+  public record PaymentApprovedDomainEvent(Payment payment) {}
+  // ↑ Contém o objeto de domínio completo
+
+  // Kafka Event (externo)
+  package com.mvbr.store.infrastructure.messaging.event;
+
+  public record PaymentApprovedEvent(
+      String eventId,
+      String paymentId,
+      String userId,
+      BigDecimal amount,
+      String currency,
+      String status,
+      Long timestamp
+  ) {}
+  // ↑ DTO serializado, versionado, contrato fixo
+
+  ---
+  2. Services: Application vs Domain
+
+  | Tipo                | Onde fica            | Responsabilidade                            |
+  |---------------------|----------------------|---------------------------------------------|
+  | Application Service | application/service/ | Orquestra (chama domain + infra)            |
+  | Domain Service      | domain/service/      | Lógica de negócio complexa (cross-entities) |
+
+  Exemplo:
+
+  // Application Service (orquestra)
+  package com.mvbr.store.application.service;
+
+  @Service
+  public class PaymentApplicationService {
+
+      private final PaymentDomainService domainService;  // Se precisar
+      private final PaymentApprovedProducer producer;
+
+      public void approvePayment(PaymentApprovedRequest request) {
+          // 1. Cria entidade de domínio
+          Payment payment = new Payment(
+              request.paymentId(),
+              request.userId(),
+              request.amount(),
+              request.currency()
+          );
+
+          // 2. Executa lógica de domínio
+          payment.markApproved();
+
+          // 3. Mapeia para evento Kafka
+          PaymentApprovedEvent kafkaEvent = PaymentEventMapper.toKafkaEvent(payment);
+
+          // 4. Publica
+          producer.producePaymentApproved(kafkaEvent);
+      }
+  }
+
+  // Domain Service (lógica de negócio complexa)
+  package com.mvbr.store.domain.service;
+
+  public class PaymentDomainService {
+
+      // Exemplo: lógica que envolve múltiplas entidades
+      public boolean canApprovePayment(Payment payment, Account account) {
+          return payment.getAmount().compareTo(account.getBalance()) <= 0
+              && account.isActive()
+              && !payment.isExpired();
+      }
+  }
+
+  ---
+  🚀 PRÓXIMOS PASSOS PRÁTICOS
+
+  1. Criar a estrutura de pacotes
+
+  mkdir -p src/main/java/com/mvbr/store/application/{controller,dto/{request,response},service}
+  mkdir -p src/main/java/com/mvbr/store/domain/{model,event,service,repository}
+  mkdir -p src/main/java/com/mvbr/store/infrastructure/{config/kafka,messaging/{event,producer,consumer,mapper},persistence}
+
+  2. Mover arquivos gradualmente
+
+  - controller/ → application/controller/
+  - dto/ → application/dto/request/ e application/dto/response/
+  - service/ → application/service/
+  - model/ → domain/model/
+  - producer/, consumer/, event/ → infrastructure/messaging/
+  - config/ → infrastructure/config/kafka/
+
+  3. Criar o Mapper (novo arquivo)
+
+  // infrastructure/messaging/mapper/PaymentEventMapper.java
+  package com.mvbr.store.infrastructure.messaging.mapper;
+
+  public class PaymentEventMapper {
+
+      public static PaymentApprovedEvent toKafkaEvent(Payment payment) {
+          return new PaymentApprovedEvent(
+              UUID.randomUUID().toString(),
+              payment.getPaymentId(),
+              payment.getUserId(),
+              payment.getAmount(),
+              payment.getCurrency(),
+              payment.getStatus().name(),
+              System.currentTimeMillis()
+          );
+      }
+  }
+
+  ---
+  📚 COMPARAÇÃO: Layered vs Hexagonal (Futuro)
+
+  | Aspecto              | Layered (Agora)              | Hexagonal (Futuro)               |
+  |----------------------|------------------------------|----------------------------------|
+  | Complexidade         | 🟢 Baixa                     | 🟡 Média                         |
+  | Testabilidade Domain | 🟡 Média (depende de Spring) | 🟢 Alta (zero deps externas)     |
+  | Isolamento           | 🟡 Bom                       | 🟢 Excelente                     |
+  | Flexibilidade        | 🟡 Média                     | 🟢 Alta (trocar tech facilmente) |
+  | Curva aprendizado    | 🟢 Fácil                     | 🟡 Média                         |
+
+  ---
+  🎯 RESUMO FINAL
+
+  Sua decisão está perfeita porque:
+
+  1. ✅ Layered resolve o problema atual (bagunça)
+  2. ✅ Simples de entender e implementar
+  3. ✅ Prepara para Hexagonal no futuro
+  4. ✅ Migração suave (só adicionar ports/ depois)
+
+  Quando migrar para Hexagonal?
+
+  - ⏰ Quando o projeto tiver 3+ bounded contexts (Payment, Order, Customer)
+  - ⏰ Quando precisar trocar tecnologias com frequência
+  - ⏰ Quando você estiver confortável com DDD
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------------------------------------------------
+

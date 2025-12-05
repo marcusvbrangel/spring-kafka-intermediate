@@ -1,4 +1,4 @@
-package com.mvbr.store.event;
+package com.mvbr.store.infrastructure.messaging.event;
 
 // userId = ordering key → garante ordering dentro da partição
 // eventId → dá idempotência

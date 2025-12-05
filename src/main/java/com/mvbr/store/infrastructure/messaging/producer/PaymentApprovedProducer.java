@@ -1,6 +1,6 @@
-package com.mvbr.store.producer;
+package com.mvbr.store.infrastructure.messaging.producer;
 
-import com.mvbr.store.event.PaymentApprovedEvent;
+import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Qualifier;
