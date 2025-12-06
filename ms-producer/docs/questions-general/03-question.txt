@@ -1,0 +1,173 @@
+
+------------------------------------------------------------------------------------------------------------------------
+Por que voce criou a classe a seguir com a notação @Component?
+  @src/main/java/com/mvbr/store/application/mapper/PaymentEventMapper.java
+------------------------------------------------------------------------------------------------------------------------
+
+Por que usei @Component no PaymentEventMapper?
+
+  1. Injeção de Dependência
+
+  O @Component torna a classe um Spring Bean gerenciado, permitindo que o Spring faça a injeção
+  automática no PaymentService:
+
+  @Service
+  public class PaymentService {
+      private final PaymentEventMapper paymentEventMapper;
+
+      // Spring injeta automaticamente porque PaymentEventMapper é um @Component
+      public PaymentService(..., PaymentEventMapper paymentEventMapper) {
+          this.paymentEventMapper = paymentEventMapper;
+      }
+  }
+
+  Sem @Component, você teria que instanciar manualmente:
+  // ❌ Sem @Component - teria que fazer assim:
+  PaymentEventMapper mapper = new PaymentEventMapper();
+
+  ---
+  2. Singleton por padrão
+
+  Com @Component, o Spring cria uma única instância (singleton) do mapper e reutiliza em toda
+  aplicação:
+
+  - ✅ Eficiente: não cria objetos desnecessários
+  - ✅ Thread-safe: desde que o mapper não tenha estado mutável (e não tem!)
+  - ✅ Gerenciado: Spring controla o ciclo de vida
+
+  ---
+  3. Facilita Testes
+
+  Em testes unitários, você pode facilmente mockar o mapper:
+
+  @Test
+  void testApprovePayment() {
+      // Arrange
+      PaymentEventMapper mockMapper = mock(PaymentEventMapper.class);
+      PaymentService service = new PaymentService(repo, producer, mockMapper);
+
+      // Act & Assert
+      verify(mockMapper).toPaymentApprovedEvent(any());
+  }
+
+  ---
+  4. Permite Futuras Evoluções
+
+  Se amanhã o mapper precisar de dependências (ex: um gerador de UUID customizado, um relógio para
+  timestamp), basta injetar:
+
+  @Component
+  public class PaymentEventMapper {
+
+      private final Clock clock; // Poderia injetar um Clock do Spring
+
+      public PaymentEventMapper(Clock clock) {
+          this.clock = clock;
+      }
+
+      public PaymentApprovedEvent toPaymentApprovedEvent(Payment payment) {
+          return new PaymentApprovedEvent(
+              UUID.randomUUID().toString(),
+              payment.getPaymentId(),
+              payment.getUserId(),
+              payment.getAmount(),
+              payment.getCurrency(),
+              payment.getStatus().name(),
+              clock.millis() // ✅ Usa o clock injetado (testável!)
+          );
+      }
+  }
+
+  ---
+  Alternativas ao @Component:
+
+  Opção 1: Classe Utilitária Estática (sem Spring)
+
+  // SEM @Component - apenas métodos estáticos
+  public final class PaymentEventMapper {
+
+      private PaymentEventMapper() {} // Construtor privado
+
+      public static PaymentApprovedEvent toPaymentApprovedEvent(Payment payment) {
+          return new PaymentApprovedEvent(...);
+      }
+  }
+
+  // Uso:
+  PaymentApprovedEvent event = PaymentEventMapper.toPaymentApprovedEvent(payment);
+
+  Quando usar:
+  - ✅ Mapper puramente funcional (sem estado)
+  - ✅ Nunca precisará de dependências
+  - ✅ Quer evitar overhead do Spring
+
+  Desvantagens:
+  - ❌ Mais difícil de testar (não pode mockar métodos estáticos facilmente)
+  - ❌ Se precisar de dependências no futuro, vai quebrar todo código
+
+  ---
+  Opção 2: @Service ao invés de @Component
+
+  @Service // Semanticamente indica "lógica de aplicação"
+  public class PaymentEventMapper {
+      // ...
+  }
+
+  Diferença:
+  - @Component: genérico (qualquer bean Spring)
+  - @Service: indica camada de serviço/aplicação
+  - @Repository: indica camada de dados
+  - @Controller/@RestController: indica camada web
+
+  Eu poderia ter usado @Service porque o mapper está na camada de aplicação, mas preferi @Component
+  porque:
+  - Mapper não é um serviço (não tem lógica de negócio)
+  - Mapper não é um repositório (não acessa dados)
+  - Mapper é apenas um utilitário de conversão
+
+  @Component é mais neutro e adequado para esse caso.
+
+  ---
+  Minha Recomendação:
+
+  Para o seu projeto, mantenha @Component porque:
+
+  1. ✅ Flexível para evoluções futuras
+  2. ✅ Facilita testes com mocks
+  3. ✅ Padrão Spring (consistente com resto do código)
+  4. ✅ Zero overhead (o mapper é stateless)
+
+  Quando mudar para classe estática:
+  - Se tiver 100% de certeza que nunca precisará de dependências
+  - Se performance for crítica (improvável para um mapper)
+  - Se estiver fora de contexto Spring
+
+  ---
+  Resumo:
+
+  | Critério               | @Component     | Classe Estática |
+  |------------------------|----------------|-----------------|
+  | Injeção de Dependência | ✅ Automática   | ❌ Manual        |
+  | Testabilidade          | ✅ Fácil (mock) | ⚠️ Difícil      |
+  | Performance            | ✅ Singleton    | ✅ Sem instância |
+  | Flexibilidade          | ✅ Alta         | ❌ Baixa         |
+  | Simplicidade           | ⚠️ Médio       | ✅ Alta          |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
