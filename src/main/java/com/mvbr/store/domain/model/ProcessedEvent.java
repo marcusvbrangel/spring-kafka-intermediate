@@ -49,13 +49,13 @@ public class ProcessedEvent {
     /**
      * Optional: Kafka partition (for debugging/tracing).
      */
-    @Column(name = "partition")
+    @Column(name = "kafka_partition")
     private Integer partition;
 
     /**
      * Optional: Kafka offset (for debugging/tracing).
      */
-    @Column(name = "offset")
+    @Column(name = "kafka_offset")
     private Long offset;
 
     // =============================

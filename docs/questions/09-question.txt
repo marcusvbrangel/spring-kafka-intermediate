@@ -1,0 +1,191 @@
+
+----------------------------------------------------------------------------------
+Enviei uma nova mensagem... verifique pelos logs todo o processamento da aplicação...
+----------------------------------------------------------------------------------
+
+● 🎉 PERFEITO! FLUXO COMPLETO FUNCIONANDO!
+
+  A mensagem foi processada com 100% de sucesso! Vamos analisar todo o fluxo:
+
+  📊 Fluxo Completo End-to-End
+
+  1️⃣ HTTP Request Recebido
+
+  POST /api/payments/approved
+  ├─ DispatcherServlet inicializado
+  └─ Request processado em 2ms
+
+  2️⃣ Validação de Duplicata (Idempotência)
+
+  SELECT p1_0.payment_id FROM payment WHERE payment_id = 'pgto-1225'
+  -- Resultado: não existe (nova transação)
+
+  3️⃣ Producer Kafka Configurado
+
+  ✅ Producer: store-producer-1
+  ✅ Profile: CRITICAL
+  ✅ Configurações aplicadas:
+     ├─ acks = -1 (all replicas)
+     ├─ enable.idempotence = true
+     ├─ retries = 2147483647 (Integer.MAX_VALUE)
+     ├─ delivery.timeout.ms = 120000 (2 minutos)
+     ├─ max.in.flight.requests = 5
+     ├─ compression.type = snappy
+     ├─ linger.ms = 10
+     └─ batch.size = 16384
+
+  4️⃣ Mensagem Publicada no Kafka
+
+  ✅ Topic: payment.approved.v1
+  ✅ Partition: 0 (hash de 'user-302')
+  ✅ Offset: 1
+  ✅ Timestamp: 1765051444509
+  ✅ Key: user-302 (garante ordenação por usuário)
+
+  Log do Producer:
+  Payment.approved event sent successfully
+  ├─ Topic: payment.approved.v1
+  ├─ Partition: 0
+  ├─ Offset: 1
+  └─ UserId: user-302
+
+  5️⃣ Pagamento Salvo no Banco
+
+  INSERT INTO payment (
+      amount, created_at, currency, status, user_id, payment_id
+  ) VALUES (
+      499.01, 1765051444442, 'BRL', 'APPROVED', 'user-302', 'pgto-1225'
+  )
+
+  6️⃣ Consumer Kafka Recebe a Mensagem
+
+  ✅ Consumer: payment-service-approved-group-4
+  ✅ Profile: CRITICAL (manual commit)
+  ✅ Partition: 0
+  ✅ Offset: 1
+
+  Log do Consumer:
+  PAYMENT APPROVED EVENT RECEIVED
+  ├─ eventId: 6ea65e3a-777a-417a-a4cf-cd8e3542b393
+  ├─ paymentId: pgto-1225
+  ├─ userId: user-302
+  ├─ amount: 499.01
+  ├─ status: APPROVED
+  └─ timestamp: 1765051444442
+
+  7️⃣ Verificação de Idempotência
+
+  SELECT id FROM processed_events
+  WHERE event_id = '6ea65e3a-777a-417a-a4cf-cd8e3542b393'
+  FETCH FIRST 1 ROWS ONLY
+  -- Resultado: vazio (evento novo, pode processar)
+
+  8️⃣ Processamento da Lógica de Negócio
+
+  Processing payment approved:
+  ├─ paymentId = pgto-1225
+  ├─ userId = user-302
+  └─ amount = 499.01
+
+  9️⃣ Registro de Idempotência
+
+  INSERT INTO processed_events (
+      event_id,
+      event_type,
+      kafka_offset,      -- ✅ Agora funciona!
+      kafka_partition,   -- ✅ Agora funciona!
+      processed_at,
+      topic
+  ) VALUES (
+      '6ea65e3a-777a-417a-a4cf-cd8e3542b393',
+      'PAYMENT_APPROVED',
+      1,         -- offset
+      0,         -- partition
+      NOW(),
+      'payment.approved.v1'
+  )
+
+  Log:
+  Event marked as processed: 6ea65e3a-777a-417a-a4cf-cd8e3542b393
+
+  🔟 Commit Manual do Offset
+
+  COMMIT: Offset committed for eventId: 6ea65e3a-...
+  ├─ partition = 0
+  └─ offset = 1
+
+  ---
+  ✅ Garantias Implementadas
+
+  | Garantia              | Status | Evidência                                                  |
+  |-----------------------|--------|------------------------------------------------------------|
+  | Durabilidade          | ✅      | acks=-1 (todas as réplicas confirmaram)                    |
+  | Idempotência Producer | ✅      | enable.idempotence=true + ProducerId=11                    |
+  | Ordenação             | ✅      | Partition key = userId (user-302 sempre partition 0)       |
+  | Retry Infinito        | ✅      | retries=2147483647 com timeout 2min                        |
+  | Idempotência Consumer | ✅      | Tabela processed_events registrou o eventId                |
+  | Commit Manual         | ✅      | Offset commitado APÓS salvar no banco                      |
+  | Transação             | ✅      | @Transactional - business logic + processed_events atômico |
+
+  ---
+  🧪 Teste de Idempotência
+
+  Se você reenviar a mesma mensagem (com o mesmo eventId), o comportamento será:
+
+  1. Consumer recebe a mensagem
+  2. Verifica: SELECT FROM processed_events WHERE event_id = '6ea65e3a-...'
+  3. ✅ ENCONTRA o registro!
+  4. Log: "Event already processed, skipping"
+  5. Commita o offset (para não reprocessar infinitamente)
+  6. NÃO executa lógica de negócio
+
+  ---
+  📈 Métricas do Evento
+
+  ┌─────────────────────────────────────────────────────────┐
+  │ EVENT: 6ea65e3a-777a-417a-a4cf-cd8e3542b393            │
+  ├─────────────────────────────────────────────────────────┤
+  │ Payment ID:    pgto-1225                                │
+  │ User ID:       user-302                                 │
+  │ Amount:        R$ 499.01                                │
+  │ Status:        APPROVED                                 │
+  │ Kafka Topic:   payment.approved.v1                      │
+  │ Partition:     0                                        │
+  │ Offset:        1                                        │
+  │ Processed At:  2025-12-06T17:04:04.892-03:00           │
+  └─────────────────────────────────────────────────────────┘
+
+  ---
+  🎯 Conclusão
+
+  TUDO FUNCIONOU PERFEITAMENTE! 🚀
+
+  ✅ Producer enviou com garantias máximas
+  ✅ Consumer processou com idempotência
+  ✅ Banco de dados salvou corretamente (kafka_offset e kafka_partition funcionando)
+  ✅ Offset commitado manualmente após sucesso
+  ✅ Zero duplicatas garantidas
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
