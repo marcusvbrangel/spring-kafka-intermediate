@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.mvbr</groupId>
-	<artifactId>store</artifactId>
+	<artifactId>ms-consumer</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>store</name>
+	<name>ms-consumer</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
