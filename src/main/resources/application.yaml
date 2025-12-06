@@ -1,31 +1,31 @@
+
+server:
+  port: ${SERVER_PORT:5050}
+
 spring:
   application:
-    name: store
+    name: ms-producer
 
   # =============================================================================================
-  # DATABASE CONFIGURATION (H2 in-memory for development)
+  # POSTGRES CONFIGURATION
   # =============================================================================================
   datasource:
-    url: jdbc:h2:mem:storedb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    hikari:
+      connection-timeout: ${DATASOURCE_CONNECTION_TIMEOUT:20000}
+      maximum-pool-size: ${DATASOURCE_MAX_POOL_SIZE:5}
 
-  # JPA / Hibernate Configuration
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/msstoreproducer}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: ${SHOW_SQL:true}
     hibernate:
-      ddl-auto: update  # Auto-create/update tables (use 'validate' in production)
-    show-sql: true      # Log SQL statements (disable in production)
+      ddl-auto: none
     properties:
       hibernate:
-        format_sql: true  # Pretty-print SQL (disable in production)
+        format_sql: ${FORMAT_SQL:true}
 
-  # H2 Console (for debugging - disable in production)
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
 
   # =============================================================================================
   # KAFKA CONFIGURATION
@@ -91,9 +91,6 @@ spring:
     topics:
       payment-approved: ${KAFKA_TOPIC_PAYMENT_APPROVED:payment.approved.v1}
       payment-approved-dlq: ${KAFKA_TOPIC_PAYMENT_APPROVED_DLQ:payment.approved.v1.dlq}
-
-server:
-  port: 5050
 
 # =============================================================================================
 # DLQ REPROCESSOR CONFIGURATION
