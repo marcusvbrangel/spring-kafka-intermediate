@@ -1,0 +1,1279 @@
+
+--------------------------------------------------------------------------------------------------------
+Simulação: se eu executar somente o meu ms-producer (nao executar ms-consume)....
+e depois pelo postman cadastrar 4 pagamentos....  o que acontecerá com as
+mensagens? pois eu ainda nao executei o meu ms consumer (consumidor)...
+--------------------------------------------------------------------------------------------------------
+
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+Cenário: Producer rodando, Consumer PARADO
+
+  O que acontece quando você cadastrar 4 pagamentos:
+
+  1. Producer recebe as 4 requisições HTTP ✅
+  2. Producer persiste os 4 pagamentos no banco msstoreproducer ✅
+  3. Producer publica 4 eventos no tópico Kafka payment.approved.v1 ✅
+  4. Kafka armazena as 4 mensagens no tópico ✅ (IMPORTANTE!)
+  5. Consumer NÃO processa nada (porque está parado) ⏸️
+
+  O que acontece com as mensagens no Kafka?
+
+  As mensagens ficam ARMAZENADAS no tópico Kafka esperando serem consumidas!
+
+  - O Kafka persiste as mensagens em disco (não é uma fila em memória volátil)
+  - As mensagens NÃO são perdidas quando o consumer está offline
+  - Elas ficam lá por 7 dias (configuração padrão de retenção do Kafka)
+  - Cada mensagem tem um offset (posição sequencial): 0, 1, 2, 3
+
+  Quando você INICIAR o ms-consumer depois:
+
+  O consumer vai consumir TODAS as 4 mensagens que foram publicadas enquanto ele estava parado!
+
+  Por quê?
+  1. O Kafka rastreia o offset de cada consumer group
+  2. Na primeira vez que o consumer inicia, ele usa auto-offset-reset: latest do seu application.yaml
+    - Mas isso só vale se nunca consumiu antes
+    - Se já consumiu antes e depois parou, ele continua de onde parou
+  3. Como você nunca rodou o consumer antes, ele tem duas opções:
+    - auto-offset-reset: latest → Consome apenas mensagens NOVAS (a partir de agora)
+    - auto-offset-reset: earliest → Consome TODAS desde o início do tópico
+
+  ⚠️ IMPORTANTE: Sua configuração atual
+
+  Deixe-me verificar sua configuração:
+
+  # ms-consumer/src/main/resources/application.yaml
+  consumer:
+    auto-offset-reset: latest  # ← AQUI!
+
+  Com latest, quando você iniciar o consumer pela primeira vez:
+  - ❌ Ele NÃO vai consumir as 4 mensagens que já estão lá
+  - ✅ Ele só vai consumir mensagens novas publicadas DEPOIS dele iniciar
+
+  Como fazer o consumer processar as 4 mensagens antigas?
+
+  Opção 1: Mudar para earliest ANTES de rodar pela primeira vez
+
+  consumer:
+    auto-offset-reset: earliest  # Consome TUDO desde o início
+
+  Opção 2: Resetar o offset do consumer group (se já rodou)
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  Demonstração prática:
+
+  Timeline:
+
+  10:00 - ms-producer inicia
+  10:01 - POST /payments (offset 0) → Kafka ✅
+  10:02 - POST /payments (offset 1) → Kafka ✅
+  10:03 - POST /payments (offset 2) → Kafka ✅
+  10:04 - POST /payments (offset 3) → Kafka ✅
+  10:05 - ms-consumer inicia (auto-offset-reset: latest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no FINAL (latest)"
+          ↓
+          Consumer posicionado no offset 4 (próximo a ser escrito)
+          ↓
+          Consumer IGNORA offsets 0,1,2,3 ❌
+
+  10:06 - POST /payments (offset 4) → Kafka ✅
+          ↓
+          Consumer PROCESSA offset 4 ✅
+
+  ---
+
+  Se fosse auto-offset-reset: earliest:
+
+  10:05 - ms-consumer inicia (auto-offset-reset: earliest)
+          ↓
+          Consumer group "payment-service-approved-group" não existe
+          ↓
+          Kafka: "Ok, vou posicionar no INÍCIO (earliest)"
+          ↓
+          Consumer posicionado no offset 0
+          ↓
+          Consumer PROCESSA offsets 0,1,2,3 ✅ (mensagens antigas)
+          ↓
+          Consumer fica esperando novas mensagens...
+
+  Você pode visualizar no Redpanda Console:
+
+  Acesse http://localhost:8089 e você verá:
+  - Topics → payment.approved.v1
+  - Messages: 4 mensagens armazenadas
+  - Consumer Groups → payment-service-approved-group
+    - Se consumer nunca rodou: grupo não existe
+    - Se consumer já rodou: mostra o offset atual (lag)
+
+  Resumo:
+
+  | Situação                   | auto-offset-reset: latest  | auto-offset-reset: earliest |
+  |----------------------------|----------------------------|-----------------------------|
+  | Consumer nunca rodou antes | ❌ Ignora mensagens antigas | ✅ Consome desde o início    |
+  | Consumer já rodou e parou  | ✅ Continua de onde parou   | ✅ Continua de onde parou    |
+  | Mensagens são perdidas?    | ❌ NÃO, ficam no Kafka      | ❌ NÃO, ficam no Kafka       |
+
+  Recomendação para seu teste:
+  Mude para earliest se quiser que o consumer processe as 4 mensagens:
+
+  consumer:
+    auto-offset-reset: earliest  # Melhor para testes/dev
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+Acredito que para uma aplicação em produção, o certo seja ficar sempre com "earliest"...
+------------------------------------------------------------------------------------------------------------------------
+
+● Excelente reflexão! Mas na verdade, para produção, a resposta é mais nuançada. Deixe-me explicar:
+
+  earliest vs latest em Produção
+
+  ⚠️ Problema com earliest em Produção:
+
+  Imagine este cenário:
+
+  Dia 1:
+  - Tópico criado há 6 meses
+  - 10 MILHÕES de mensagens acumuladas
+  - Você faz deploy do ms-consumer pela PRIMEIRA VEZ
+
+  Com auto-offset-reset: earliest:
+  ❌ Consumer vai tentar processar 10 MILHÕES de mensagens antigas!
+  ❌ Pode demorar horas/dias
+  ❌ Pode crashear por falta de memória
+  ❌ Pode processar dados obsoletos/irrelevantes
+
+  ✅ Recomendação para Produção:
+
+  A configuração ideal depende do cenário:
+
+  | Cenário                            | Configuração                   | Razão                                       |
+  |------------------------------------|--------------------------------|---------------------------------------------|
+  | Sistema NOVO (primeira vez)        | latest                         | Não processa mensagens antigas irrelevantes |
+  | Sistema EXISTENTE (já rodou antes) | latest ou earliest (tanto faz) | Kafka sempre continua de onde parou         |
+  | Ambiente DEV/TEST                  | earliest                       | Quer processar tudo para testar             |
+  | Reprocessamento intencional        | Reset manual de offset         | Controle total                              |
+
+  Por que latest é comum em Produção:
+
+  consumer:
+    auto-offset-reset: latest  # ← Padrão seguro para produção
+
+  Motivos:
+
+  1. Evita sobrecarga inicial
+    - Consumer novo não processa milhões de mensagens antigas
+    - Inicia "limpo" processando apenas eventos futuros
+  2. Dados antigos podem ser irrelevantes
+    - Mensagens de 6 meses atrás podem não fazer sentido hoje
+    - Ex: Promoções expiradas, usuários já processados, etc.
+  3. Proteção contra erros
+    - Se você criar um consumer novo por engano, ele não vai reprocessar tudo
+
+  Quando earliest faz sentido em Produção:
+
+  consumer:
+    auto-offset-reset: earliest  # Casos específicos
+
+  Cenários:
+  1. Sistema de auditoria: Precisa processar TODO o histórico
+  2. Data pipeline: Reprocessar dados históricos para analytics
+  3. Migração de dados: Quer garantir que nada foi perdido
+  4. Tópico pequeno: Poucas mensagens, sem risco de sobrecarga
+
+  O Comportamento Real em Produção:
+
+  IMPORTANTE: auto-offset-reset só importa na PRIMEIRA VEZ que um consumer group conecta!
+
+  Cenário normal em produção:
+
+  Deploy 1 (Dia 1):
+  - Consumer inicia pela primeira vez
+  - auto-offset-reset: latest
+  - Começa no offset atual (ex: 1000)
+  - Processa offsets 1001, 1002, 1003...
+  - Kafka armazena: "consumer group X está no offset 1003"
+
+  Deploy 2 (Dia 2 - restart após crash):
+  - Consumer reinicia
+  - Kafka: "Ah, esse grupo já consumiu até offset 1003"
+  - Consumer continua de 1003 ✅
+  - auto-offset-reset é IGNORADO! (só vale na primeira vez)
+
+  Deploy 3 (Dia 3 - atualização de código):
+  - Consumer reinicia novamente
+  - Kafka: "Grupo está no offset 5789"
+  - Consumer continua de 5789 ✅
+  - auto-offset-reset é IGNORADO novamente!
+
+  Então quando auto-offset-reset realmente importa?
+
+  Apenas em 3 situações:
+
+  1. Primeira vez que o consumer group conecta (nunca rodou antes)
+  2. Offset expirou (mensagens antigas foram deletadas pelo Kafka - retenção padrão 7 dias)
+  3. Você resetou o offset manualmente (comando kafka-consumer-groups --reset-offsets)
+
+  Minha Recomendação para Seu Projeto:
+
+  Para DEV/TESTE (agora):
+  consumer:
+    auto-offset-reset: earliest  # ✅ Melhor para testar
+  - Você quer ver o consumer processar as mensagens de teste
+  - Não tem risco de milhões de mensagens antigas
+
+  Para PRODUÇÃO (futuro):
+  consumer:
+    auto-offset-reset: latest  # ✅ Padrão seguro
+  - Proteção contra reprocessamento acidental
+  - Quando consumer crashar e reiniciar, continua de onde parou (isso é o mais importante!)
+
+  Estratégia Híbrida (Avançada):
+
+  Para ter o melhor dos dois mundos:
+
+  # application-dev.yaml (desenvolvimento)
+  spring:
+    kafka:
+      consumer:
+        auto-offset-reset: earliest
+
+  # application-prod.yaml (produção)
+  spring:
+    kafka:
+      consumer:
+        auto-offset-reset: latest
+
+  Ou configurar via variável de ambiente:
+
+  consumer:
+    auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:latest}
+
+  Resumo Final:
+
+  | Aspecto           | earliest                        | latest                 |
+  |-------------------|---------------------------------|------------------------|
+  | Primeira vez      | Processa tudo                   | Só novas mensagens     |
+  | Após restart      | Continua de onde parou          | Continua de onde parou |
+  | Risco em produção | Alto (pode reprocessar milhões) | Baixo                  |
+  | Bom para testes   | ✅ Sim                           | ❌ Não                  |
+  | Bom para produção | ⚠️ Depende                      | ✅ Geralmente sim       |
+
+  Minha sugestão:
+  - Mantenha earliest agora para seus testes
+  - Documente que em produção deve ser latest
+  - O mais importante: entenda que após o primeiro deploy, isso não importa mais (Kafka sempre continua de onde parou)
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+Fiz este teste:  somente com o producer executando, eu enviei 4 pagamentos.....
+depois fui no redpanda e vi as 4 mensagens la no topico de
+pagamento aprovado.....    depois eu executei o meu consumidor para ler as mensagens guardadas no broker do kafka....
+segue os logs do carregamento do microserviço consumer:
+------------------------------------------------------------------------------------------------------------------------
+
+● 🎉 PERFEITO! Seu teste funcionou exatamente como esperado!
+
+  Vou explicar o que aconteceu analisando os logs:
+
+  📊 Análise dos Logs - O que aconteceu:
+
+  1️⃣ Consumer inicializou com auto-offset-reset: earliest
+
+  auto.offset.reset = earliest
+
+  Isso está nos logs! O consumer foi configurado para consumir desde o início.
+
+  2️⃣ Consumer se conectou às partições
+
+  Successfully joined group with generation Generation{generationId=5, ...}
+  Finished assignment for group at generation 5:
+    {consumer-payment-service-approved-group-4-...:
+      Assignment(partitions=[payment.approved.v1-0, payment.approved.v1-1, payment.approved.v1-2])}
+
+  O consumer recebeu TODAS as 3 partições do tópico payment.approved.v1.
+
+  3️⃣ Offset inicial definido
+
+  Setting offset for partition payment.approved.v1-0 to the committed offset FetchPosition{offset=1, ...}
+  Setting offset for partition payment.approved.v1-1 to the committed offset FetchPosition{offset=1, ...}
+  Setting offset for partition payment.approved.v1-2 to the committed offset FetchPosition{offset=0, ...}
+
+  ⚠️ ATENÇÃO AQUI! O consumer NÃO começou no offset 0 (início do tópico).
+
+  Por quê? Porque o consumer group JÁ EXISTIA de uma execução anterior!
+
+  - Partição 0: offset=1 (já tinha consumido antes)
+  - Partição 1: offset=1 (já tinha consumido antes)
+  - Partição 2: offset=0 (primeira mensagem)
+
+  4️⃣ Consumer processou MAIS mensagens do que você enviou!
+
+  Você disse que enviou 4 pagamentos, mas o consumer processou 10 eventos:
+
+  1. eventId: 392cef62... paymentId: pgto-499, userId: user-21 (partition=1, offset=1)
+  2. eventId: 68a98d73... paymentId: pgto-499, userId: user-21 (partition=1, offset=2)
+  3. eventId: ab615cf6... paymentId: pgto-499, userId: user-21 (partition=1, offset=3)
+  4. eventId: 63d1bd74... paymentId: pgto-499, userId: user-21 (partition=1, offset=4)
+  5. eventId: 990d1979... paymentId: pgto-499, userId: user-21 (partition=1, offset=5)
+  6. eventId: 26ec497d... paymentId: pgto-459, userId: user-214 (partition=1, offset=6)
+  7. eventId: d0721f51... paymentId: pgto-49, userId: user-14 (partition=2, offset=0)
+  8. eventId: 6197c7e5... paymentId: pgto-4669, userId: user-4414 (partition=2, offset=1)
+  9. eventId: 4e669bc9... paymentId: pgto-34, userId: user-448914 (partition=2, offset=2)
+
+  Isso prova que:
+  - Havia 6 mensagens antigas na partição 1 (offsets 1-6)
+  - Havia 3 mensagens na partição 2 (offsets 0-2)
+  - Partição 0 não tinha mensagens novas
+
+  5️⃣ Idempotência funcionou perfeitamente
+
+  Cada evento foi:
+  1. Verificado se já foi processado (SELECT ... WHERE event_id=?)
+  2. Processado
+  3. Salvo na tabela processed_events (INSERT INTO processed_events ...)
+  4. Commit manual do offset (COMMIT: Offset committed)
+
+  ---
+  🔍 Por que não começou do offset 0?
+
+  Resposta: O consumer group payment-service-approved-group já existia no Kafka!
+
+  Quando você rodou o consumer anteriormente (em algum teste), ele:
+  1. Consumiu algumas mensagens
+  2. Fez commit dos offsets
+  3. Kafka salvou: "Esse grupo parou no offset X"
+
+  Quando você reiniciou o consumer agora:
+  - Kafka disse: "Ah, você já consumiu até offset 1 na partição 0 e 1"
+  - auto-offset-reset: earliest foi IGNORADO (só vale na primeira vez)
+
+  ---
+  🧪 Como testar o auto-offset-reset: earliest de verdade?
+
+  Opção 1: Deletar o consumer group
+
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --delete \
+    --group payment-service-approved-group
+
+  Depois rode o consumer novamente → Agora sim vai começar do offset 0!
+
+  Opção 2: Usar outro consumer group
+
+  # Temporariamente, para teste
+  spring:
+    kafka:
+      consumer:
+        group-id: payment-service-approved-group-TESTE-EARLIEST
+
+  Opção 3: Resetar offsets manualmente
+
+  # Para a aplicação primeiro!
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+    --group payment-service-approved-group \
+    --reset-offsets --to-earliest \
+    --topic payment.approved.v1 \
+    --execute
+
+  ---
+  ✅ Conclusões do seu teste:
+
+  | Item                                  | Status          | Explicação                                         |
+  |---------------------------------------|-----------------|----------------------------------------------------|
+  | Mensagens persistidas no Kafka        | ✅ SIM           | Ficam armazenadas mesmo com consumer parado        |
+  | Consumer processa após iniciar        | ✅ SIM           | Consumiu 10 eventos antigos                        |
+  | auto-offset-reset: earliest funcionou | ⚠️ PARCIALMENTE | Só vale se consumer group não existe               |
+  | Idempotência funciona                 | ✅ SIM           | Cada evento verificado e salvo em processed_events |
+  | Commit manual funciona                | ✅ SIM           | Offset commitado após cada processamento           |
+  | Particionamento funciona              | ✅ SIM           | Mensagens distribuídas nas 3 partições             |
+
+  ---
+  🎯 Próximo teste sugerido:
+
+  Para ver o earliest de verdade:
+
+  1. Delete o consumer group:
+  docker exec -it kafka kafka-consumer-groups \
+    --bootstrap-server localhost:9092 \
+    --delete --group payment-service-approved-group
+  2. Adicione mais 4 pagamentos via Postman
+  3. Inicie o consumer novamente
+  4. Agora sim vai consumir TUDO desde offset 0!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

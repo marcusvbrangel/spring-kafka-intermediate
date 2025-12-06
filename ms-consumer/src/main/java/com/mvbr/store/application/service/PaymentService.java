@@ -1,65 +1,45 @@
 package com.mvbr.store.application.service;
 
-import com.mvbr.store.application.dto.request.PaymentApprovedRequest;
-import com.mvbr.store.application.mapper.PaymentEventMapper;
-import com.mvbr.store.application.mapper.PaymentRequestMapper;
 import com.mvbr.store.domain.model.Payment;
-import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
-import com.mvbr.store.infrastructure.messaging.producer.PaymentApprovedProducer;
 import com.mvbr.store.infrastructure.persistence.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service layer for payment processing in the CONSUMER microservice.
+ *
+ * This service is used by Kafka consumers to process and persist payment data.
+ * It does NOT produce events (that's the producer's responsibility).
+ */
 @Service
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final PaymentApprovedProducer paymentApprovedProducer;
-    private final PaymentEventMapper paymentEventMapper;
-    private final PaymentRequestMapper paymentRequestMapper;
 
-    public PaymentService(
-            PaymentRepository paymentRepository,
-            PaymentApprovedProducer paymentApprovedProducer,
-            PaymentEventMapper paymentEventMapper,
-            PaymentRequestMapper paymentRequestMapper) {
+    public PaymentService(PaymentRepository paymentRepository) {
         this.paymentRepository = paymentRepository;
-        this.paymentApprovedProducer = paymentApprovedProducer;
-        this.paymentEventMapper = paymentEventMapper;
-        this.paymentRequestMapper = paymentRequestMapper;
     }
 
     /**
-     * Aprova um pagamento.
+     * Processes and persists a payment received from Kafka event.
      *
-     * @Transactional garante que save() e publicação no Kafka sejam atômicos.
-     * ATENÇÃO: Kafka está FORA da transação JPA! Para garantia total de consistência,
-     * implementar Outbox Pattern no futuro.
+     * @param payment the payment domain object to be processed (already validated in constructor)
+     * @return the persisted payment
      */
     @Transactional
-    public void approvePayment(PaymentApprovedRequest request) {
-
-        // ============================
-        // 1. Conversão DTO → Domain Model (camada de aplicação)
-        // ============================
-        Payment payment = paymentRequestMapper.toPayment(request);
-
-        // ============================
-        // 2. Lógica de negócio (validação no construtor)
-        // ============================
-        payment.markApproved();
-
-        // ============================
-        // 3. Persistência no banco (TEMPORARIAMENTE COMENTADO - problema com JPA)
-        // ============================
-        paymentRepository.save(payment);
-
-        // ============================
-        // 4. Publicação de evento (delegado ao mapper)
-        // ============================
-        PaymentApprovedEvent event = paymentEventMapper.toPaymentApprovedEvent(payment);
-        paymentApprovedProducer.producePaymentApproved(event);
-
+    public Payment processPayment(Payment payment) {
+        // Persist payment (validation already done in Payment constructor)
+        return paymentRepository.save(payment);
     }
 
+    /**
+     * Updates an existing payment status.
+     *
+     * @param payment the payment with updated data
+     * @return the updated payment
+     */
+    @Transactional
+    public Payment updatePayment(Payment payment) {
+        return paymentRepository.save(payment);
+    }
 }

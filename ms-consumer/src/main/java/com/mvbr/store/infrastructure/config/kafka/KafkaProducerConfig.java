@@ -13,170 +13,67 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Kafka Producer Configuration for MS-CONSUMER.
+ *
+ * NOTE: Even though this is a consumer microservice, we need a minimal producer
+ * configuration for DLQ reprocessing (DLQReprocessor republishes messages).
+ *
+ * Only CRITICAL profile is configured (used by DLQReprocessor).
+ */
 @Configuration
 public class KafkaProducerConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    // Critical producer settings
-    @Value("${spring.kafka.producer.critical.acks}")
-    private String criticalAcks;
-
-    @Value("${spring.kafka.producer.critical.enable-idempotence}")
-    private Boolean criticalEnableIdempotence;
-
-    @Value("${spring.kafka.producer.critical.retries}")
-    private Integer criticalRetries;
-
-    @Value("${spring.kafka.producer.critical.delivery-timeout-ms}")
-    private Integer criticalDeliveryTimeoutMs;
-
-    @Value("${spring.kafka.producer.critical.request-timeout-ms}")
-    private Integer criticalRequestTimeoutMs;
-
-    @Value("${spring.kafka.producer.critical.max-in-flight-requests-per-connection}")
-    private Integer criticalMaxInFlightRequests;
-
-    @Value("${spring.kafka.producer.critical.compression-type}")
-    private String criticalCompressionType;
-
-    @Value("${spring.kafka.producer.critical.linger-ms}")
-    private Integer criticalLingerMs;
-
-    @Value("${spring.kafka.producer.critical.batch-size}")
-    private Integer criticalBatchSize;
-
-    // Default producer settings
-    @Value("${spring.kafka.producer.default.acks}")
-    private String defaultAcks;
-
-    @Value("${spring.kafka.producer.default.compression-type}")
-    private String defaultCompressionType;
-
-    // Fast producer settings
-    @Value("${spring.kafka.producer.fast.acks}")
-    private String fastAcks;
-
-    @Value("${spring.kafka.producer.fast.linger-ms}")
-    private Integer fastLingerMs;
-
-    @Value("${spring.kafka.producer.fast.batch-size}")
-    private Integer fastBatchSize;
-
-    // =============================
-    // 1 - CRITICAL PRODUCER
-    // =============================
+    /**
+     * CRITICAL Producer Factory - For DLQ reprocessing only.
+     *
+     * Configuration mirrors the producer microservice to ensure same delivery guarantees:
+     * - acks=all: Leader + all replicas must confirm (maximum durability)
+     * - enable.idempotence=true: No duplicates even with retries
+     * - retries=Integer.MAX_VALUE: Retry indefinitely until success/timeout
+     * - max.in.flight.requests=5: Maintains ordering with idempotence
+     * - compression.type=snappy: Fast compression with good ratio
+     */
     @Bean
-    public ProducerFactory<String,Object> criticalProducerFactory() {
+    public ProducerFactory<String, Object> criticalProducerFactory() {
+        Map<String, Object> props = new HashMap<>();
 
-        Map<String,Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        // Kafka broker
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-        // === DURABILIDADE MÁXIMA ===
-        config.put(ProducerConfig.ACKS_CONFIG, criticalAcks);                                  // líder + réplicas confirmam
-        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, criticalEnableIdempotence);      // sem duplicatas
+        // Serialization
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
-        // === RETRY & TIMEOUT ===
-        config.put(ProducerConfig.RETRIES_CONFIG, criticalRetries);                            // tenta até conseguir ou dar timeout
-        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, criticalDeliveryTimeoutMs);      // 2 minutos max
-        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, criticalRequestTimeoutMs);        // 30s por request
+        // CRITICAL: Maximum reliability settings
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 120000);
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
 
-        // === ORDENAÇÃO + THROUGHPUT ===
-        // Kafka 0.11+ com idempotence=true permite até 5 e mantém ordem!
-        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, criticalMaxInFlightRequests);
+        // Compression
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
 
-        // === PERFORMANCE ===
-        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, criticalCompressionType);           // boa compressão + rápido
-        config.put(ProducerConfig.LINGER_MS_CONFIG, criticalLingerMs);                        // agrupa até 10ms
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, criticalBatchSize);                      // 16KB batch
+        // Batch settings
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
 
-        // === SERIALIZERS ===
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
-        return new DefaultKafkaProducerFactory<>(config);
-
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
-    @Bean(name = "criticalKafkaTemplate")
+    /**
+     * CRITICAL KafkaTemplate - Used by DLQReprocessor to republish messages.
+     *
+     * This is the ONLY KafkaTemplate in the consumer microservice.
+     * It's specifically used for DLQ reprocessing, not for general message production.
+     */
+    @Bean
     public KafkaTemplate<String, Object> criticalKafkaTemplate() {
         return new KafkaTemplate<>(criticalProducerFactory());
     }
-
-    // =============================
-    // 2 - DEFAULT PRODUCER
-    // =============================
-    @Bean
-    public ProducerFactory<String, Object> defaultProducerFactory() {
-
-        Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ProducerConfig.ACKS_CONFIG, defaultAcks);
-        config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, defaultCompressionType);
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(config);
-
-    }
-
-    @Bean(name = "defaultKafkaTemplate")
-    public KafkaTemplate<String, Object> defaultKafkaTemplate() {
-        return new KafkaTemplate<>(defaultProducerFactory());
-    }
-
-    // =============================
-    // 3 - FIRE-AND-FORGET PRODUCER
-    // =============================
-    @Bean
-    public ProducerFactory<String, Object> fastProducerFactory() {
-
-        Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ProducerConfig.ACKS_CONFIG, fastAcks);
-        config.put(ProducerConfig.LINGER_MS_CONFIG, fastLingerMs);
-        config.put(ProducerConfig.BATCH_SIZE_CONFIG, fastBatchSize);
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(config);
-
-    }
-
-    /*
-
-  ==============================================================================================================
-
-  1. max.in.flight.requests = 5 (antes era 1)
-
-  - Com idempotence=true, o Kafka garante ordem mesmo com 5 requests em paralelo
-  - Throughput aumenta até 5x sem perder garantias
-  - https://kafka.apache.org/documentation/#producerconfigs_max.in.flight.requests
-  .per.connection
-
-  2. retries = Integer.MAX_VALUE (antes era 15)
-
-  - Combinado com delivery.timeout.ms = 120000
-  - Tenta reenviar por até 2 minutos antes de falhar
-  - Mais resiliente a falhas temporárias de rede
-
-  3. Batching (linger.ms=10, batch.size=16KB)
-
-  - Agrupa mensagens próximas (até 10ms)
-  - Reduz overhead de rede
-  - Ainda aceita envio imediato se buffer encher
-
-  ✅ Garantias Mantidas
-
-  Sua configuração AINDA TEM:
-  - ✅ Zero duplicatas (idempotence=true)
-  - ✅ Ordem estrita por partição (max.in.flight ≤ 5)
-  - ✅ Durabilidade máxima (acks=all)
-  - ✅ Alta disponibilidade (retries infinitos + timeout)
-
-  Agora está production-grade para cenários críticos!
-
-==============================================================================================================
-
-  */
-
 }

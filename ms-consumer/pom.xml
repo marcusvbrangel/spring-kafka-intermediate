@@ -30,10 +30,11 @@
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-		<dependency>
+		<!-- Web starter removed - consumer doesn't need HTTP server -->
+		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
+		</dependency> -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
