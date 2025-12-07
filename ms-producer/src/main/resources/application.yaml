@@ -26,6 +26,14 @@ spring:
       hibernate:
         format_sql: ${FORMAT_SQL:true}
 
+  # =============================================================================================
+  # FLYWAY CONFIGURATION
+  # =============================================================================================
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
 
   # =============================================================================================
   # KAFKA CONFIGURATION
@@ -61,3 +69,29 @@ spring:
     # Topics
     topics:
       payment-approved: ${KAFKA_TOPIC_PAYMENT_APPROVED:payment.approved.v1}
+
+# ===============================================================================================
+# OUTBOX PATTERN CONFIGURATION
+# ===============================================================================================
+outbox:
+  publisher:
+    # Frequência de execução do job (milissegundos)
+    # Default: a cada 5 segundos
+    fixed-delay: ${OUTBOX_PUBLISHER_FIXED_DELAY:5000}
+
+    # Número máximo de eventos a processar por batch
+    # Default: 100 eventos
+    # Ajustar conforme throughput necessário
+    batch-size: ${OUTBOX_PUBLISHER_BATCH_SIZE:100}
+
+    # Número máximo de tentativas antes de marcar como FAILED
+    # Default: 3 tentativas
+    max-retries: ${OUTBOX_PUBLISHER_MAX_RETRIES:3}
+
+# ===============================================================================================
+# SPRING TASK SCHEDULING (required for @Scheduled)
+# ===============================================================================================
+spring.task:
+  scheduling:
+    pool:
+      size: 2  # Número de threads para scheduled tasks
