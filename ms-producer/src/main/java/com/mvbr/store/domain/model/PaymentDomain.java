@@ -1,28 +1,31 @@
 package com.mvbr.store.domain.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-
 import java.math.BigDecimal;
 import java.util.Objects;
 
-@Entity
-public class Payment {
+/**
+ * Payment Domain Model (Hexagonal Architecture).
+ *
+ * Pure domain object - NO infrastructure dependencies (no JPA annotations).
+ * Contains ALL business logic and validation rules.
+ *
+ * This is the SAME logic from the original Payment.java,
+ * but without @Entity and @Id annotations.
+ */
+public class PaymentDomain {
 
-    @Id
-    private String paymentId;
-    private String userId;
-    private BigDecimal amount;
-    private String currency;
+    private final String paymentId;
+    private final String userId;
+    private final BigDecimal amount;
+    private final String currency;
     private PaymentStatus status;
-    private long createdAt;
+    private final long createdAt;
 
-    public Payment() {}
-
-    public Payment(String paymentId,
-                   String userId,
-                   BigDecimal amount,
-                   String currency) {
+    // Constructor for creating NEW payments
+    public PaymentDomain(String paymentId,
+                         String userId,
+                         BigDecimal amount,
+                         String currency) {
 
         if (paymentId == null || paymentId.isBlank())
             throw new IllegalArgumentException("paymentId cannot be null or empty");
@@ -42,6 +45,21 @@ public class Payment {
         this.currency = currency.toUpperCase();
         this.status = PaymentStatus.PENDING;
         this.createdAt = System.currentTimeMillis();
+    }
+
+    // Constructor for RESTORING payments from database (used by adapters)
+    public PaymentDomain(String paymentId,
+                         String userId,
+                         BigDecimal amount,
+                         String currency,
+                         PaymentStatus status,
+                         long createdAt) {
+        this.paymentId = paymentId;
+        this.userId = userId;
+        this.amount = amount;
+        this.currency = currency;
+        this.status = status;
+        this.createdAt = createdAt;
     }
 
     // =======================================
@@ -70,6 +88,10 @@ public class Payment {
         this.status = PaymentStatus.CANCELED;
     }
 
+    // =======================================
+    //      GETTERS
+    // =======================================
+
     public String getPaymentId() { return paymentId; }
     public String getUserId() { return userId; }
     public BigDecimal getAmount() { return amount; }
@@ -80,8 +102,8 @@ public class Payment {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Payment)) return false;
-        Payment payment = (Payment) o;
+        if (!(o instanceof PaymentDomain)) return false;
+        PaymentDomain payment = (PaymentDomain) o;
         return paymentId.equals(payment.paymentId);
     }
 
@@ -90,4 +112,15 @@ public class Payment {
         return Objects.hash(paymentId);
     }
 
+    @Override
+    public String toString() {
+        return "PaymentDomain{" +
+                "paymentId='" + paymentId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", amount=" + amount +
+                ", currency='" + currency + '\'' +
+                ", status=" + status +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
