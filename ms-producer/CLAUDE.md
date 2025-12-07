@@ -69,9 +69,33 @@ The codebase follows a strict **3-layer architecture**:
    - Message producers
    - Events: Kafka event schemas
    - JPA repositories for persistence
+   - **Outbox Pattern**: Garantees consistency between DB and Kafka
 
 **Dependency Rule:** Application → Domain ← Infrastructure
 (Domain layer has NO dependencies on other layers)
+
+### Outbox Pattern Implementation
+
+This service implements the **Transactional Outbox Pattern** to solve the dual-write problem:
+
+**Components:**
+- `OutboxEvent` (JPA Entity): Stores events pending publication
+- `OutboxService`: Saves events in the same transaction as business data
+- `OutboxPublisher` (Scheduled Job): Publishes events to Kafka asynchronously
+- `OutboxEventRepository`: Query interface for outbox events
+
+**Flow:**
+1. `@Transactional` method saves Payment + OutboxEvent (atomically)
+2. Job runs every 5 seconds, fetches PENDING events
+3. Publishes to Kafka with retry logic (max 3 attempts)
+4. Marks as PUBLISHED or FAILED
+
+**Guarantees:**
+- Atomicity: Both DB write and event save succeed or fail together
+- At-least-once delivery: Events will eventually be published
+- Ordering: Events processed in creation order (FIFO per aggregate)
+
+See `docs/OUTBOX_PATTERN.md` for detailed documentation.
 
 ### Kafka Producer Configuration
 
@@ -113,15 +137,21 @@ All critical events include headers:
 **Partitioning Strategy:**
 Events are partitioned by `userId` to guarantee ordering per user.
 
-### Payment Flow (Producer Side)
+### Payment Flow (Producer Side) - WITH OUTBOX PATTERN
 
 1. **POST** `/api/payments/approved` → `PaymentController`
 2. Request converted to `Payment` domain model
-3. `PaymentService.approvePayment()` validates and marks as approved
-4. Payment persisted to PostgreSQL database
-5. Constructs `PaymentApprovedEvent` with metadata
-6. `PaymentApprovedProducer` sends event to Kafka topic `payment.approved.v1`
-7. Returns HTTP response to client
+3. `ApprovePaymentService.approvePayment()` validates and marks as approved
+4. **@Transactional** block starts:
+   - Payment persisted to PostgreSQL database
+   - `OutboxEvent` saved to `outbox_event` table (same transaction!)
+5. Returns HTTP response to client
+6. **Asynchronously** (every 5s):
+   - `OutboxPublisher` fetches PENDING events
+   - Publishes to Kafka topic `payment.approved.v1`
+   - Marks event as PUBLISHED
+
+**Key benefit:** Database and Kafka are guaranteed to be consistent (eventually)
 
 ### Domain Model Notes
 

@@ -31,9 +31,10 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, String
      * @param limit máximo de eventos a buscar
      * @return lista de eventos pendentes
      */
-    @Query("SELECT e FROM OutboxEvent e " +
+    @Query(value = "SELECT e FROM OutboxEvent e " +
            "WHERE e.status = :status " +
-           "ORDER BY e.createdAt ASC")
+           "ORDER BY e.createdAt ASC " +
+           "LIMIT :limit")
     List<OutboxEvent> findByStatusOrderByCreatedAtAsc(
             @Param("status") OutboxEventStatus status,
             @Param("limit") int limit

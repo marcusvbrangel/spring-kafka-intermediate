@@ -1,0 +1,32 @@
+server:
+  port: 0  # Random port for tests
+
+spring:
+  application:
+    name: ms-producer-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  flyway:
+    enabled: false  # Disable Flyway for tests
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    topics:
+      payment-approved: payment.approved.v1.test
+
+outbox:
+  publisher:
+    fixed-delay: 10000  # 10s for tests (slower)
+    batch-size: 10
+    max-retries: 2
