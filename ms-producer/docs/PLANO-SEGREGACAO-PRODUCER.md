@@ -11,12 +11,9 @@ Remover todos os componentes relacionados a **CONSUMER** do projeto ms-producer,
 - ✅ `PaymentController.java` - REST endpoints que iniciam o fluxo
 - ✅ `PaymentService.java` - Lógica de negócio
 - ✅ `PaymentApprovedProducer.java` - Produz eventos para Kafka
-- ✅ `PaymentNotificationProducer.java` - Produz eventos para Kafka
 - ✅ `PaymentApprovedEvent.java` - Schema do evento
-- ✅ `PaymentNotificationEvent.java` - Schema do evento
 - ✅ `KafkaProducerConfig.java` - Configurações de producers
 - ✅ `PaymentApprovedRequest.java` - DTO de entrada
-- ✅ `PaymentNotificationRequest.java` - DTO de entrada
 - ✅ `PaymentRequestMapper.java` - Mapeia Request → Domain
 - ✅ `PaymentEventMapper.java` - Mapeia Domain → Event
 - ✅ `Payment.java` - Entidade de domínio
@@ -25,7 +22,6 @@ Remover todos os componentes relacionados a **CONSUMER** do projeto ms-producer,
 
 ### Arquivos que DEVEM SER REMOVIDOS (Consumer)
 - ❌ `PaymentApprovedConsumer.java` - Consome eventos Kafka
-- ❌ `PaymentNotificationConsumer.java` - Consome eventos Kafka
 - ❌ `DLQReprocessor.java` - Reprocessa DLQ (consumer)
 - ❌ `KafkaConsumerConfig.java` - Configurações de consumers
 - ❌ `ProcessedEvent.java` - Entidade para idempotência (consumer)
@@ -44,8 +40,7 @@ ms-producer/
 │   │   ├── controller/
 │   │   │   └── PaymentController.java ✅
 │   │   ├── dto/request/
-│   │   │   ├── PaymentApprovedRequest.java ✅
-│   │   │   └── PaymentNotificationRequest.java ✅
+│   │   │   └── PaymentApprovedRequest.java ✅
 │   │   ├── mapper/
 │   │   │   ├── PaymentRequestMapper.java ✅
 │   │   │   └── PaymentEventMapper.java ✅
@@ -63,15 +58,12 @@ ms-producer/
 │   │   │   └── KafkaConsumerConfig.java ❌
 │   │   ├── messaging/
 │   │   │   ├── producer/
-│   │   │   │   ├── PaymentApprovedProducer.java ✅
-│   │   │   │   └── PaymentNotificationProducer.java ✅
+│   │   │   │   └── PaymentApprovedProducer.java ✅
 │   │   │   ├── consumer/ [REMOVER PASTA INTEIRA]
 │   │   │   │   ├── PaymentApprovedConsumer.java ❌
-│   │   │   │   ├── PaymentNotificationConsumer.java ❌
 │   │   │   │   └── DLQReprocessor.java ❌
 │   │   │   └── event/
-│   │   │       ├── PaymentApprovedEvent.java ✅
-│   │   │       └── PaymentNotificationEvent.java ✅
+│   │   │       └── PaymentApprovedEvent.java ✅
 │   │   └── persistence/
 │   │       └── PaymentRepository.java ✅
 │   └── domain/model/
@@ -91,13 +83,12 @@ ms-producer/
 
 ### FASE 1: Remover Classes Java (Consumer)
 1. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/PaymentApprovedConsumer.java`
-2. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/PaymentNotificationConsumer.java`
-3. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/DLQReprocessor.java`
-4. ❌ Deletar pasta `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/`
-5. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/config/kafka/KafkaConsumerConfig.java`
-6. ❌ Deletar `src/main/java/com/mvbr/store/domain/model/ProcessedEvent.java`
-7. ❌ Deletar `src/main/java/com/mvbr/store/domain/repository/ProcessedEventRepository.java`
-8. ❌ Deletar pasta `src/main/java/com/mvbr/store/domain/repository/` (se ficar vazia)
+2. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/DLQReprocessor.java`
+3. ❌ Deletar pasta `src/main/java/com/mvbr/store/infrastructure/messaging/consumer/`
+4. ❌ Deletar `src/main/java/com/mvbr/store/infrastructure/config/kafka/KafkaConsumerConfig.java`
+5. ❌ Deletar `src/main/java/com/mvbr/store/domain/model/ProcessedEvent.java`
+6. ❌ Deletar `src/main/java/com/mvbr/store/domain/repository/ProcessedEventRepository.java`
+7. ❌ Deletar pasta `src/main/java/com/mvbr/store/domain/repository/` (se ficar vazia)
 
 ### FASE 2: Limpar Configurações (application.yaml)
 9. 🔧 Remover toda seção `spring.kafka.consumer` do `application.yaml`

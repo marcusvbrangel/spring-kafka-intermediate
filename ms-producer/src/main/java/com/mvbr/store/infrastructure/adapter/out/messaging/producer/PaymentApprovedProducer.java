@@ -1,4 +1,4 @@
-package com.mvbr.store.infrastructure.messaging.producer;
+package com.mvbr.store.infrastructure.adapter.out.messaging.producer;
 
 import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
 import org.apache.kafka.clients.producer.ProducerRecord;

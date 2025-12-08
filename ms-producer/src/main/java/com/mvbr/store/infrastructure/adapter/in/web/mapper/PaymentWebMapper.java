@@ -2,9 +2,7 @@ package com.mvbr.store.infrastructure.adapter.in.web.mapper;
 
 import com.mvbr.store.application.command.ApprovePaymentCommand;
 import com.mvbr.store.application.command.PaymentResponse;
-import com.mvbr.store.application.command.SendPaymentNotificationCommand;
 import com.mvbr.store.infrastructure.adapter.in.web.dto.PaymentApprovedRequestDto;
-import com.mvbr.store.infrastructure.adapter.in.web.dto.PaymentNotificationRequestDto;
 import com.mvbr.store.infrastructure.adapter.in.web.dto.PaymentResponseDto;
 import org.springframework.stereotype.Component;
 
@@ -25,18 +23,6 @@ public class PaymentWebMapper {
                 dto.userId(),
                 dto.amount(),
                 dto.currency()
-        );
-    }
-
-    /**
-     * Converts PaymentNotificationRequestDto (web) to SendPaymentNotificationCommand (application).
-     */
-    public SendPaymentNotificationCommand toSendNotificationCommand(PaymentNotificationRequestDto dto) {
-        return new SendPaymentNotificationCommand(
-                dto.paymentId(),
-                dto.userId(),
-                dto.amount(),
-                dto.message()
         );
     }
 

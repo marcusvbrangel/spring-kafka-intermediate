@@ -19,14 +19,4 @@ public interface PaymentEventPublisherPort {
      * @param payment the payment domain object that was approved
      */
     void publishPaymentApprovedEvent(PaymentDomain payment);
-
-    /**
-     * Publishes a payment notification event to Kafka.
-     *
-     * @param paymentId the payment identifier
-     * @param userId the user identifier
-     * @param amount the payment amount
-     * @param message the notification message
-     */
-    void publishPaymentNotificationEvent(String paymentId, String userId, double amount, String message);
 }
