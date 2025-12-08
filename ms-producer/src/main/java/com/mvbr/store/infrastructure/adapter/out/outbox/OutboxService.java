@@ -73,14 +73,52 @@ public class OutboxService {
             // Salvar na mesma transação
             OutboxEvent saved = outboxRepository.save(outboxEvent);
 
-            log.info("Outbox event saved: id={}, type={}, aggregateId={}",
-                    saved.getId(), eventType, aggregateId);
+            // =============================
+            // LOG: EVENTO SALVO NO OUTBOX
+            // =============================
+            log.info("\n" +
+                    "=================================================================\n" +
+                    "                   💾 OUTBOX EVENT SAVED                         \n" +
+                    "=================================================================\n" +
+                    "  Outbox ID:       {}\n" +
+                    "  Aggregate Type:  {}\n" +
+                    "  Aggregate ID:    {}\n" +
+                    "  Event Type:      {}\n" +
+                    "  Topic:           {}\n" +
+                    "  Partition Key:   {}\n" +
+                    "  Status:          {}\n" +
+                    "  Created At:      {}\n" +
+                    "=================================================================",
+                    saved.getId(),
+                    aggregateType,
+                    aggregateId,
+                    eventType,
+                    topic,
+                    partitionKey,
+                    saved.getStatus(),
+                    saved.getCreatedAt()
+            );
 
             return saved;
 
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize event payload: aggregateId={}, eventType={}",
-                    aggregateId, eventType, e);
+            // =============================
+            // LOG: ERRO DE SERIALIZAÇÃO
+            // =============================
+            log.error("\n" +
+                    "=================================================================\n" +
+                    "                  ❌ OUTBOX SERIALIZATION ERROR                  \n" +
+                    "=================================================================\n" +
+                    "  Aggregate Type:  {}\n" +
+                    "  Aggregate ID:    {}\n" +
+                    "  Event Type:      {}\n" +
+                    "  Error:           {}\n" +
+                    "=================================================================",
+                    aggregateType,
+                    aggregateId,
+                    eventType,
+                    e.getMessage()
+            );
             throw new OutboxSerializationException(
                     "Failed to serialize event payload: " + eventType, e);
         }

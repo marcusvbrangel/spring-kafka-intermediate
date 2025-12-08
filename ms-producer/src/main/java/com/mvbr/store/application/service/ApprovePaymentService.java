@@ -33,7 +33,7 @@ public class ApprovePaymentService implements ApprovePaymentUseCase {
     private final PaymentRepositoryPort paymentRepository;
     private final OutboxService outboxService;
 
-    @Value("${kafka.topics.payment-approved}")
+    @Value("${spring.kafka.topics.payment-approved}")
     private String paymentApprovedTopic;
 
     public ApprovePaymentService(

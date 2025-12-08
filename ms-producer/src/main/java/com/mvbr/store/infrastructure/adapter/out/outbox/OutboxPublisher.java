@@ -1,10 +1,12 @@
 package com.mvbr.store.infrastructure.adapter.out.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,7 +52,7 @@ public class OutboxPublisher {
 
     public OutboxPublisher(OutboxEventRepository outboxRepository,
                            OutboxService outboxService,
-                           KafkaTemplate<String, Object> kafkaTemplate,
+                           @Qualifier("criticalKafkaTemplate") KafkaTemplate<String, Object> kafkaTemplate,
                            ObjectMapper objectMapper) {
         this.outboxRepository = outboxRepository;
         this.outboxService = outboxService;
@@ -109,16 +111,33 @@ public class OutboxPublisher {
      */
     @Transactional
     protected void publishEvent(OutboxEvent outboxEvent) {
-        log.info("Publishing outbox event: id={}, type={}, topic={}",
-                outboxEvent.getId(),
-                outboxEvent.getEventType(),
-                outboxEvent.getTopic());
-
         try {
-            // Desserializar payload JSON para Object
-            Object payload = objectMapper.readValue(
-                    outboxEvent.getPayload(),
-                    Object.class
+            // Desserializar payload JSON para o tipo correto baseado no eventType
+            Object payload = deserializePayload(outboxEvent);
+
+            // Extrair eventId do payload (evento de domínio)
+            String domainEventId = extractEventId(payload, outboxEvent.getEventType());
+
+            // =============================
+            // LOG: INICIANDO PUBLICAÇÃO
+            // =============================
+            log.info("\n" +
+                    "=================================================================\n" +
+                    "                  📤 OUTBOX → KAFKA PUBLISHER                    \n" +
+                    "=================================================================\n" +
+                    "  Outbox ID (Tabela):  {}\n" +
+                    "  Event ID (Domínio):  {}\n" +
+                    "  Event Type:          {}\n" +
+                    "  Aggregate ID:        {}\n" +
+                    "  Topic:               {}\n" +
+                    "  Partition Key:       {}\n" +
+                    "=================================================================",
+                    outboxEvent.getId(),
+                    domainEventId,
+                    outboxEvent.getEventType(),
+                    outboxEvent.getAggregateId(),
+                    outboxEvent.getTopic(),
+                    outboxEvent.getPartitionKey()
             );
 
             // Criar ProducerRecord com headers
@@ -135,7 +154,7 @@ public class OutboxPublisher {
             ));
             record.headers().add(new RecordHeader(
                     "event-id",
-                    outboxEvent.getId().getBytes(StandardCharsets.UTF_8)
+                    domainEventId.getBytes(StandardCharsets.UTF_8)
             ));
             record.headers().add(new RecordHeader(
                     "aggregate-id",
@@ -149,14 +168,44 @@ public class OutboxPublisher {
             // Publicar no Kafka (síncrono para garantir ordem)
             kafkaTemplate.send(record).whenComplete((result, ex) -> {
                 if (ex != null) {
-                    log.error("Failed to send event to Kafka: id={}, error={}",
-                            outboxEvent.getId(), ex.getMessage());
+                    // =============================
+                    // LOG: ERRO AO PUBLICAR
+                    // =============================
+                    log.error("\n" +
+                            "=================================================================\n" +
+                            "                    ❌ KAFKA PUBLISH FAILED                      \n" +
+                            "=================================================================\n" +
+                            "  Outbox ID:     {}\n" +
+                            "  Event ID:      {}\n" +
+                            "  Error:         {}\n" +
+                            "=================================================================",
+                            outboxEvent.getId(),
+                            domainEventId,
+                            ex.getMessage()
+                    );
                     handlePublishError(outboxEvent, ex);
                 } else {
-                    log.info("Event published successfully to Kafka: id={}, partition={}, offset={}",
+                    // =============================
+                    // LOG: SUCESSO NA PUBLICAÇÃO
+                    // =============================
+                    log.info("\n" +
+                            "=================================================================\n" +
+                            "                  ✅ KAFKA PUBLISH SUCCESSFUL                    \n" +
+                            "=================================================================\n" +
+                            "  Outbox ID:       {}\n" +
+                            "  Event ID:        {}\n" +
+                            "  Topic:           {}\n" +
+                            "  Partition:       {}\n" +
+                            "  Offset:          {}\n" +
+                            "  Timestamp:       {}\n" +
+                            "=================================================================",
                             outboxEvent.getId(),
+                            domainEventId,
+                            result.getRecordMetadata().topic(),
                             result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
+                            result.getRecordMetadata().offset(),
+                            result.getRecordMetadata().timestamp()
+                    );
 
                     // Marcar como publicado
                     outboxService.markAsPublished(outboxEvent.getId());
@@ -164,7 +213,23 @@ public class OutboxPublisher {
             }).get(); // Bloqueia para garantir processamento sequencial
 
         } catch (Exception e) {
-            log.error("Error publishing outbox event: id={}", outboxEvent.getId(), e);
+            // =============================
+            // LOG: ERRO CRÍTICO
+            // =============================
+            log.error("\n" +
+                    "=================================================================\n" +
+                    "                    🔥 CRITICAL PUBLISH ERROR                    \n" +
+                    "=================================================================\n" +
+                    "  Outbox ID:     {}\n" +
+                    "  Event Type:    {}\n" +
+                    "  Error:         {}\n" +
+                    "  Stack Trace:   See below\n" +
+                    "=================================================================",
+                    outboxEvent.getId(),
+                    outboxEvent.getEventType(),
+                    e.getMessage(),
+                    e
+            );
             throw new RuntimeException("Failed to publish outbox event", e);
         }
     }
@@ -192,6 +257,51 @@ public class OutboxPublisher {
                     event.getId(), event.getRetryCount() + 1, maxRetries);
             outboxService.recordError(event.getId(), error.getMessage());
         }
+    }
+
+    /**
+     * Desserializa o payload JSON para o tipo correto baseado no eventType.
+     *
+     * IMPORTANTE: Mapeia eventType para a classe correspondente.
+     * Adicione novos mapeamentos aqui conforme novos tipos de eventos forem criados.
+     *
+     * @param outboxEvent evento do outbox
+     * @return payload deserializado como o tipo correto
+     * @throws Exception se falhar ao deserializar
+     */
+    private Object deserializePayload(OutboxEvent outboxEvent) throws Exception {
+        return switch (outboxEvent.getEventType()) {
+            case "PAYMENT_APPROVED" -> objectMapper.readValue(
+                    outboxEvent.getPayload(),
+                    PaymentApprovedEvent.class
+            );
+            // Adicione novos tipos aqui conforme necessário
+            // case "PAYMENT_CANCELLED" -> objectMapper.readValue(...)
+            default -> throw new IllegalArgumentException(
+                    "Unknown event type: " + outboxEvent.getEventType()
+            );
+        };
+    }
+
+    /**
+     * Extrai o eventId do evento de domínio deserializado.
+     *
+     * IMPORTANTE: Este é o eventId usado para idempotência no consumer.
+     * Cada tipo de evento deve retornar seu eventId específico.
+     *
+     * @param payload evento deserializado
+     * @param eventType tipo do evento
+     * @return eventId do evento de domínio
+     */
+    private String extractEventId(Object payload, String eventType) {
+        return switch (eventType) {
+            case "PAYMENT_APPROVED" -> ((PaymentApprovedEvent) payload).eventId();
+            // Adicione novos tipos aqui conforme necessário
+            // case "PAYMENT_CANCELLED" -> ((PaymentCancelledEvent) payload).eventId();
+            default -> throw new IllegalArgumentException(
+                    "Unknown event type for eventId extraction: " + eventType
+            );
+        };
     }
 
     /**

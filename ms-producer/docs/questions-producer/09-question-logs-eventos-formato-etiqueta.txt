@@ -1,0 +1,131 @@
+
+  📊 Resumo dos Logs em Formato de Etiqueta
+
+  Implementei logs visuais bonitos nos dois microserviços:
+
+  ms-producer 📤
+
+  1. OutboxService - Quando evento é salvo no outbox:
+
+  =================================================================
+                     💾 OUTBOX EVENT SAVED
+  =================================================================
+    Outbox ID:       cc39c528-fae5-43ff-ad13-53844b71fe2c
+    Aggregate Type:  PAYMENT
+    Aggregate ID:    pgto-12
+    Event Type:      PAYMENT_APPROVED
+    Topic:           payment.approved.v1
+    Partition Key:   user-84
+    Status:          PENDING
+    Created At:      2025-12-07T23:18:28.538Z
+  =================================================================
+
+  2. OutboxPublisher - Quando vai publicar no Kafka:
+
+  =================================================================
+                    📤 OUTBOX → KAFKA PUBLISHER
+  =================================================================
+    Outbox ID (Tabela):  cc39c528-fae5-43ff-ad13-53844b71fe2c
+    Event ID (Domínio):  bad5230c-6db5-4027-852e-6938e560630f
+    Event Type:          PAYMENT_APPROVED
+    Aggregate ID:        pgto-12
+    Topic:               payment.approved.v1
+    Partition Key:       user-84
+  =================================================================
+
+  3. OutboxPublisher - Quando publicação é bem-sucedida:
+
+  =================================================================
+                    ✅ KAFKA PUBLISH SUCCESSFUL
+  =================================================================
+    Outbox ID:       cc39c528-fae5-43ff-ad13-53844b71fe2c
+    Event ID:        bad5230c-6db5-4027-852e-6938e560630f
+    Topic:           payment.approved.v1
+    Partition:       1
+    Offset:          4
+    Timestamp:       1765160310833
+  =================================================================
+
+  4. OutboxPublisher - Se houver erro:
+
+  =================================================================
+                      ❌ KAFKA PUBLISH FAILED
+  =================================================================
+    Outbox ID:     cc39c528-fae5-43ff-ad13-53844b71fe2c
+    Event ID:      bad5230c-6db5-4027-852e-6938e560630f
+    Error:         Connection refused
+  =================================================================
+
+  ---
+  ms-consumer 📨
+
+  1. PaymentApprovedConsumer - Quando recebe do Kafka:
+
+  =================================================================
+                 📨 KAFKA → CONSUMER RECEIVED
+  =================================================================
+    Event ID:      bad5230c-6db5-4027-852e-6938e560630f
+    Payment ID:    pgto-12
+    User ID:       user-84
+    Amount:        57.52
+    Currency:      BRL
+    Status:        APPROVED
+    Timestamp:     1765160308538
+    Partition:     1
+    Offset:        4
+  =================================================================
+
+  2. PaymentApprovedConsumer - Se detectar duplicata (idempotência):
+
+  =================================================================
+                    ⚠️  DUPLICATE EVENT DETECTED
+  =================================================================
+    Event ID:      bad5230c-6db5-4027-852e-6938e560630f
+    Payment ID:    pgto-12
+    User ID:       user-84
+    Action:        SKIPPING (already processed)
+    Partition:     1
+    Offset:        4
+  =================================================================
+
+  3. PaymentApprovedConsumer - Quando processamento é bem-sucedido:
+
+  =================================================================
+                ✅ EVENT PROCESSED SUCCESSFULLY
+  =================================================================
+    Event ID:        bad5230c-6db5-4027-852e-6938e560630f
+    Payment ID:      pgto-12
+    User ID:         user-84
+    Amount:          57.52
+    Topic:           payment.approved.v1
+    Partition:       1
+    Offset:          4
+    Status:          COMMITTED
+  =================================================================
+
+  4. PaymentApprovedConsumer - Se houver erro de desserialização:
+
+  =================================================================
+                    ❌ DESERIALIZATION ERROR
+  =================================================================
+    Partition:  1
+    Offset:     4
+    Error:      Received null event
+    Action:     Message will be retried or sent to DLQ
+  =================================================================
+
+  ---
+  🎯 Benefícios dos Logs em Etiqueta:
+
+  1. Rastreabilidade Visual: Fácil de identificar visualmente no console
+  2. IDs Claros: Diferencia claramente Outbox ID (tabela) vs Event ID (domínio)
+  3. Fluxo Completo: Acompanha a jornada do evento do início ao fim
+  4. Debugging Rápido: Identifica problemas rapidamente
+  5. Produção Ready: Logs estruturados para ferramentas de log aggregation
+
+  Agora você pode rastrear perfeitamente toda a jornada de um evento:
+  💾 OUTBOX EVENT SAVED → 📤 OUTBOX → KAFKA PUBLISHER → ✅ KAFKA PUBLISH SUCCESSFUL
+                                                                ↓
+  📨 KAFKA → CONSUMER RECEIVED → ✅ EVENT PROCESSED SUCCESSFULLY
+
+  Os logs estão prontos para teste! 🚀

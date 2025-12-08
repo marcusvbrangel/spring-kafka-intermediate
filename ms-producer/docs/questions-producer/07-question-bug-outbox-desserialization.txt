@@ -1,0 +1,103 @@
+
+
+● Excelente! O bug foi resolvido com sucesso! 🎉
+
+  Analisando os logs, posso confirmar que tudo está funcionando perfeitamente agora:
+
+  ✅ Evidências de Sucesso
+
+  ms-producer (Logs superiores):
+
+  1. Outbox salvou o evento: Outbox event saved: id=cc39c528-fae5-43ff-ad13-53844b71fe2c
+  2. Publisher encontrou 1 evento pendente: Found 1 pending outbox events to publish
+  3. Publicação no Kafka bem-sucedida: Event published successfully to Kafka: id=cc39c528-..., partition=1, offset=4
+  4. Evento marcado como PUBLISHED: Outbox event marked as PUBLISHED
+
+  ms-consumer (Logs inferiores):
+
+  1. Consumer recebeu a mensagem: Received: 1 records
+  2. CONSUMER INVOKED apareceu! ✅ (linha que nunca aparecia antes)
+  === CONSUMER INVOKED === partition=1, offset=4, event=PaymentApprovedEvent[eventId=51f58ef3-..., paymentId=pgto-12, userId=user-84,
+  amount=57.52, currency=BRL, status=APPROVED, timestamp=1765160308538]
+  3. Desserialização correta: Event type: com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent
+  4. Verificação de idempotência executada: Query no processed_events (select pe1_0.id from processed_events...)
+  5. Evento processado: PAYMENT APPROVED EVENT RECEIVED - eventId: 51f58ef3-...
+  6. Salvo na tabela processed_events: insert into processed_events ...
+  7. Marcado como processado: Event marked as processed: 51f58ef3-...
+  8. Offset commitado manualmente: COMMIT: Offset committed for eventId: 51f58ef3-... (partition=1, offset=4)
+  9. Confirmação do commit Kafka: Commit list: {payment.approved.v1-1=OffsetAndMetadata{offset=5, ...}}
+
+  ✅ Nenhuma mensagem na DLQ!
+
+  Não há mais logs de SENDING TO DLQ - o processamento foi 100% bem-sucedido!
+
+  🔧 Resumo das Correções Aplicadas
+
+  1. ms-producer/OutboxPublisher.java
+
+  - Problema: Deserializava payload como Object.class → resultava em LinkedHashMap
+  - Solução: Criado método deserializePayload() que mapeia eventType → classe específica (PaymentApprovedEvent.class)
+
+  2. ms-consumer/KafkaConsumerConfig.java
+
+  - Problema: JsonDeserializer não sabia qual classe usar sem type headers
+  - Solução: Adicionado JsonDeserializer.VALUE_DEFAULT_TYPE configuração que define PaymentApprovedEvent como tipo padrão
+
+  📊 Fluxo Completo Agora Funciona:
+
+  1. Postman → POST /api/payments/approved
+  2. ApprovePaymentService → Salva Payment + OutboxEvent (transação atômica)
+  3. OutboxPublisher (job a cada 5s) → Deserializa corretamente + publica no Kafka
+  4. Kafka → Armazena mensagem no tópico payment.approved.v1
+  5. PaymentApprovedConsumer → Deserializa corretamente ✅
+  6. Verificação de idempotência → Consulta processed_events
+  7. Processamento de negócio → Log do evento
+  8. Salva em processed_events → INSERT bem-sucedido ✅
+  9. Commit manual do offset → Kafka avança para próxima mensagem
+
+  Seus microserviços agora implementam corretamente:
+  - ✅ Outbox Pattern (consistência eventual DB + Kafka)
+  - ✅ Idempotency Pattern (tabela processed_events populada)
+  - ✅ Manual commit (controle fino do offset)
+  - ✅ Retry com exponential backoff
+  - ✅ Dead Letter Queue (pronta para casos de erro real)
+
+  O sistema está 100% funcional! 🚀
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

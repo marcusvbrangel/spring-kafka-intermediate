@@ -1,0 +1,69 @@
+
+🔍 Explicação Completa dos Dois IDs
+
+  Fluxo Passo-a-Passo:
+
+  1. POST /api/payments/approved com payload: {"paymentId": "pgto-12", "userId": "user-84", ...}
+     ↓
+  2. ApprovePaymentService.approvePayment() - linha 93-101
+     ↓
+     Cria PaymentApprovedEvent com:
+     eventId = UUID.randomUUID().toString()  → bad5230c-6db5-4027-852e-6938e560630f
+     paymentId = "pgto-12"
+     userId = "user-84"
+     ...
+     ↓
+  3. OutboxService.saveEvent() - linha 64-71
+     ↓
+     Cria OutboxEvent com:
+     id = UUID.randomUUID().toString()  → 411eeedf-89b4-4f19-b0a1-f71288809f31
+     payload = JSON do PaymentApprovedEvent (inclui o eventId bad5230c...)
+     ↓
+  4. Salva na tabela outbox_event
+     ↓
+  5. OutboxPublisher (job a cada 5s) lê o OutboxEvent
+     ↓
+     Log no ms-producer: "Publishing outbox event: id=411eeedf-..." ← ID da tabela
+     ↓
+  6. Deserializa o payload JSON → PaymentApprovedEvent
+     ↓
+     Evento recriado tem eventId = bad5230c-... (vem do JSON)
+     ↓
+  7. Publica no Kafka → mensagem contém PaymentApprovedEvent
+     ↓
+  8. Consumer recebe PaymentApprovedEvent
+     ↓
+     Log no ms-consumer: "eventId=bad5230c-..." ← ID do evento de domínio
+     ↓
+  9. Salva na tabela processed_events usando eventId = bad5230c-...
+
+  📊 Tabela Comparativa
+
+  | Característica | OutboxEvent.id                       | PaymentApprovedEvent.eventId                 |
+  |----------------|--------------------------------------|----------------------------------------------|
+  | Gerado em      | OutboxEvent:95 (construtor)          | ApprovePaymentService:94                     |
+  | Exemplo        | 411eeedf-89b4-4f19-b0a1-f71288809f31 | bad5230c-6db5-4027-852e-6938e560630f         |
+  | Tabela         | outbox_event.id (PK)                 | processed_events.event_id (UNIQUE)           |
+  | Propósito      | Rastrear registro outbox             | Garantir idempotência no consumer            |
+  | Visível em     | Logs do ms-producer                  | Logs do ms-consumer, Redpanda, Kafka headers |
+  | Ciclo de vida  | Permanece no producer                | Viaja pelo Kafka até o consumer              |
+
+  ✅ Por Que Dois IDs?
+
+  Design Pattern correto! Cada ID tem uma responsabilidade:
+
+  OutboxEvent.id (ID de infraestrutura)
+
+  - Identifica o registro na tabela outbox
+  - Usado para controle interno do padrão Outbox
+  - Permite rastrear status (PENDING → PUBLISHED)
+  - Permite retry e recuperação de falhas no publisher
+  - Escopo: Apenas ms-producer
+
+  PaymentApprovedEvent.eventId (ID de domínio)
+
+  - Identifica o evento de negócio end-to-end
+  - Usado para idempotência no consumer
+  - Garante que o mesmo evento não seja processado 2x
+  - Escopo: Producer → Kafka → Consumer (viaja por todo o fluxo)
+
