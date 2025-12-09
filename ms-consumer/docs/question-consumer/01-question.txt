@@ -8,11 +8,9 @@
 
   - ✅ PaymentController.java (REST endpoints)
   - ✅ PaymentApprovedRequest.java (DTO HTTP)
-  - ✅ PaymentNotificationRequest.java (DTO HTTP)
   - ✅ PaymentRequestMapper.java (mapeia Request → Domain)
   - ✅ PaymentEventMapper.java (mapeia Domain → Event)
   - ✅ PaymentApprovedProducer.java (produz eventos)
-  - ✅ PaymentNotificationProducer.java (produz eventos)
   - ✅ Pastas controller/, dto/request/, mapper/, producer/
   - ✅ Dependência spring-boot-starter-web do pom.xml
 
@@ -37,7 +35,7 @@
   ---
   📦 O que o ms-consumer faz agora:
 
-  1. Consome eventos Kafka (PaymentApprovedConsumer, PaymentNotificationConsumer)
+  1. Consome eventos Kafka (PaymentApprovedConsumer)
   2. Processa com idempotência (rastreia em ProcessedEvent)
   3. Persiste no PostgreSQL (PaymentRepository)
   4. Gerencia DLQ (DLQReprocessor republica mensagens quando habilitado)

@@ -93,9 +93,11 @@ public class KafkaConsumerConfig {
         props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
         props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
 
-        // JsonDeserializer specific configuration
+        // JsonDeserializer specific configuration - CRITICAL FIX
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);
+        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        props.put(JsonDeserializer.TYPE_MAPPINGS,
+            "PaymentApprovedEvent:com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent");
 
         return props;
     }
@@ -109,6 +111,10 @@ public class KafkaConsumerConfig {
 
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, criticalEnableAutoCommit);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, criticalMaxPollRecords);
+
+        // Set default type for JsonDeserializer when no type headers are present
+        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE,
+                  "com.mvbr.store.infrastructure.messaging.event.PaymentApprovedEvent");
 
         return new DefaultKafkaConsumerFactory<>(props);
     }

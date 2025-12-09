@@ -159,7 +159,6 @@ Consumed topics:
 
 **Event Schemas:**
 - `PaymentApprovedEvent` - Consumed from `payment.approved.v1`
-- `PaymentNotificationEvent` - Consumed from notification topics
 
 **Event Headers (expected):**
 - `event-type`: e.g., "PAYMENT_APPROVED"

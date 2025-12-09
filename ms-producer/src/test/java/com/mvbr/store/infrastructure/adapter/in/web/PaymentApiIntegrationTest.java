@@ -170,7 +170,7 @@ class PaymentApiIntegrationTest {
             .body("errors", notNullValue())
             .body("errors.size()", greaterThan(0))
             .body("errors.find { it.field == 'paymentId' }", notNullValue())
-            .body("errors.find { it.field == 'paymentId' }.message", containsString("cannot be blank"));
+            .body("errors.find { it.field == 'paymentId' }.message", containsString("Payment ID cannot be"));
     }
 
     @Test
@@ -283,7 +283,7 @@ class PaymentApiIntegrationTest {
             .post("/approved")
         .then()
             .statusCode(400)
-            .body("errors.find { it.field == 'amount' }.message", containsString("positive"));
+            .body("errors.find { it.field == 'amount' }.message", containsString("Amount must be"));
     }
 
     @Test
@@ -350,7 +350,7 @@ class PaymentApiIntegrationTest {
             .post("/approved")
         .then()
             .statusCode(400)
-            .body("errors.find { it.field == 'currency' }.message", containsString("exactly 3 characters"));
+            .body("errors.find { it.field == 'currency' }.message", containsString("ISO 4217"));
     }
 
     @Test

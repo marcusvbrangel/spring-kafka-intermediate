@@ -46,9 +46,47 @@ public class PaymentApprovedConsumer {
 
         // Handle deserialization failures gracefully
         if (event == null) {
-            log.error("DESERIALIZATION ERROR: Received null event - message will be retried or sent to DLQ");
+            log.error("\n" +
+                    "=================================================================\n" +
+                    "                  ❌ DESERIALIZATION ERROR                       \n" +
+                    "=================================================================\n" +
+                    "  Partition:  {}\n" +
+                    "  Offset:     {}\n" +
+                    "  Error:      Received null event\n" +
+                    "  Action:     Message will be retried or sent to DLQ\n" +
+                    "=================================================================",
+                    partition, offset
+            );
             throw new IllegalArgumentException("Failed to deserialize event - received null");
         }
+
+        // =============================
+        // LOG: EVENTO RECEBIDO DO KAFKA
+        // =============================
+        log.info("\n" +
+                "=================================================================\n" +
+                "               📨 KAFKA → CONSUMER RECEIVED                      \n" +
+                "=================================================================\n" +
+                "  Event ID:      {}\n" +
+                "  Payment ID:    {}\n" +
+                "  User ID:       {}\n" +
+                "  Amount:        {}\n" +
+                "  Currency:      {}\n" +
+                "  Status:        {}\n" +
+                "  Timestamp:     {}\n" +
+                "  Partition:     {}\n" +
+                "  Offset:        {}\n" +
+                "=================================================================",
+                event.eventId(),
+                event.paymentId(),
+                event.userId(),
+                event.amount(),
+                event.currency(),
+                event.status(),
+                event.timestamp(),
+                partition,
+                offset
+        );
 
         // =============================
         // IDEMPOTENCY CHECK
@@ -56,8 +94,23 @@ public class PaymentApprovedConsumer {
         // Check if this event was already processed to prevent duplicate processing
         // (e.g., due to consumer crash before acknowledge, rebalancing, or manual retry)
         if (processedEventRepository.existsByEventId(event.eventId())) {
-            log.warn("IDEMPOTENCY: Event {} already processed, skipping (paymentId={}, userId={})",
-                    event.eventId(), event.paymentId(), event.userId());
+            log.warn("\n" +
+                    "=================================================================\n" +
+                    "                  ⚠️  DUPLICATE EVENT DETECTED                   \n" +
+                    "=================================================================\n" +
+                    "  Event ID:      {}\n" +
+                    "  Payment ID:    {}\n" +
+                    "  User ID:       {}\n" +
+                    "  Action:        SKIPPING (already processed)\n" +
+                    "  Partition:     {}\n" +
+                    "  Offset:        {}\n" +
+                    "=================================================================",
+                    event.eventId(),
+                    event.paymentId(),
+                    event.userId(),
+                    partition,
+                    offset
+            );
 
             // Acknowledge to move offset forward (avoid reprocessing on every restart)
             if (acknowledgment != null) {
@@ -97,7 +150,30 @@ public class PaymentApprovedConsumer {
             );
             processedEventRepository.save(processedEvent);
 
-            log.info("Event marked as processed: {}", event.eventId());
+            // =============================
+            // LOG: EVENTO PROCESSADO COM SUCESSO
+            // =============================
+            log.info("\n" +
+                    "=================================================================\n" +
+                    "              ✅ EVENT PROCESSED SUCCESSFULLY                    \n" +
+                    "=================================================================\n" +
+                    "  Event ID:        {}\n" +
+                    "  Payment ID:      {}\n" +
+                    "  User ID:         {}\n" +
+                    "  Amount:          {}\n" +
+                    "  Topic:           {}\n" +
+                    "  Partition:       {}\n" +
+                    "  Offset:          {}\n" +
+                    "  Status:          COMMITTED\n" +
+                    "=================================================================",
+                    event.eventId(),
+                    event.paymentId(),
+                    event.userId(),
+                    event.amount(),
+                    paymentApprovedTopic,
+                    partition,
+                    offset
+            );
 
             // =============================
             // COMMIT OFFSET
@@ -105,8 +181,6 @@ public class PaymentApprovedConsumer {
             // Only commit after BOTH business logic AND idempotency record are saved
             if (acknowledgment != null) {
                 acknowledgment.acknowledge();
-                log.info("COMMIT: Offset committed for eventId: {} (partition={}, offset={})",
-                        event.eventId(), partition, offset);
             }
 
         } catch (Exception e) {

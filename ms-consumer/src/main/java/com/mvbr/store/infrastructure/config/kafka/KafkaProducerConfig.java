@@ -72,7 +72,7 @@ public class KafkaProducerConfig {
      * This is the ONLY KafkaTemplate in the consumer microservice.
      * It's specifically used for DLQ reprocessing, not for general message production.
      */
-    @Bean
+    @Bean(name = "criticalKafkaTemplate")
     public KafkaTemplate<String, Object> criticalKafkaTemplate() {
         return new KafkaTemplate<>(criticalProducerFactory());
     }

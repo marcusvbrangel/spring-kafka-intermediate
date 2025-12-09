@@ -32,8 +32,7 @@
   │   │
   │   ├── dto/                               ← DTOs de entrada/saída
   │   │   ├── request/
-  │   │   │   ├── PaymentApprovedRequest.java
-  │   │   │   └── PaymentNotificationRequest.java
+  │   │   │   └── PaymentApprovedRequest.java
   │   │   └── response/
   │   │       └── PaymentResponse.java
   │   │
@@ -67,16 +66,13 @@
       ├── messaging/                         ← Kafka (toda mensageria)
       │   │
       │   ├── event/                         ← Eventos do KAFKA (contratos externos)
-      │   │   ├── PaymentApprovedEvent.java
-      │   │   └── PaymentNotificationEvent.java
+      │   │   └── PaymentApprovedEvent.java
       │   │
       │   ├── producer/                      ← Produtores
-      │   │   ├── PaymentApprovedProducer.java
-      │   │   └── PaymentNotificationProducer.java
+      │   │   └── PaymentApprovedProducer.java
       │   │
       │   ├── consumer/                      ← Consumidores
-      │   │   ├── PaymentApprovedConsumer.java
-      │   │   └── PaymentNotificationConsumer.java
+      │   │   └── PaymentApprovedConsumer.java
       │   │
       │   └── mapper/                        ← Conversão Domain ↔ Kafka Event
       │       └── PaymentEventMapper.java
