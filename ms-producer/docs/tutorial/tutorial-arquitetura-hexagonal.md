@@ -1,2066 +1,1681 @@
-# Tutorial Prático: Arquitetura Hexagonal em Produção
+# Tutorial Definitivo: Arquitetura Hexagonal (Ports & Adapters) - Isole Seu Domínio
 
 ## 📋 Sumário
 
-1. [O que é e Para Que Serve](#1-o-que-é-e-para-que-serve)
-2. [Estrutura Completa do Projeto](#2-estrutura-completa-do-projeto)
-3. [Camadas da Arquitetura](#3-camadas-da-arquitetura)
+1. [O que é Arquitetura Hexagonal](#1-o-que-é-arquitetura-hexagonal)
+2. [Por Que Hexagonal e Não Camadas](#2-por-que-hexagonal-e-não-camadas)
+3. [Ports vs Adapters](#3-ports-vs-adapters)
 4. [Implementação Passo a Passo](#4-implementação-passo-a-passo)
-5. [Padrões de Código](#5-padrões-de-código)
-6. [Testes na Prática](#6-testes-na-prática)
-7. [Casos de Uso Reais](#7-casos-de-uso-reais)
-8. [Checklist de Implementação](#8-checklist-de-implementação)
+5. [Inbound vs Outbound](#5-inbound-vs-outbound)
+6. [Testes com Hexagonal](#6-testes-com-hexagonal)
+7. [Hexagonal no Dia a Dia](#7-hexagonal-no-dia-a-dia)
+8. [Armadilhas Comuns](#8-armadilhas-comuns)
+9. [Checklist Hexagonal](#9-checklist-hexagonal)
+10. [Exercícios Práticos](#10-exercícios-práticos)
 
 ---
 
-## 1. O que É e Para Que Serve
+## 1. O que é Arquitetura Hexagonal
 
-### Definição Prática
+### Definição em 30 Segundos
 
-Arquitetura Hexagonal (Ports & Adapters) é um padrão onde:
-
-```
-┌─────────────────────────────────────────────┐
-│                                             │
-│  DOMAIN (Regras de Negócio)                │
-│  ↓ depende de ↓                             │
-│  PORTS (Interfaces)                         │
-│  ↑ implementado por ↑                       │
-│  ADAPTERS (JPA, Kafka, REST)                │
-│                                             │
-└─────────────────────────────────────────────┘
-```
-
-**Em português claro:**
-- **Domain**: Sua lógica de negócio PURA (sem frameworks)
-- **Ports**: Contratos (interfaces) que o domain precisa
-- **Adapters**: Implementações técnicas (JPA, Kafka, REST, etc)
-
-### Por Que Usar em Produção?
-
-| Problema Comum | Solução Hexagonal |
-|----------------|-------------------|
-| Trocar banco (Oracle → Postgres) quebra tudo | Troca apenas o adapter (5 min) |
-| Testes lentos (precisa subir banco/Kafka) | Testa domain puro (milissegundos) |
-| Migrar REST → gRPC reescreve tudo | Adiciona adapter gRPC mantendo domain |
-| Lógica de negócio espalhada | Tudo no domain (fácil de encontrar) |
-
-### Diagrama Visual Completo
+**Arquitetura Hexagonal** (também chamada de **Ports & Adapters**) é um padrão arquitetural onde o **DOMÍNIO** está no **CENTRO**, **isolado** de tecnologias externas (frameworks, banco de dados, mensageria).
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    CAMADA DE APRESENTAÇÃO                   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ REST API     │  │ GraphQL      │  │ gRPC         │      │
-│  │ Controller   │  │ Resolver     │  │ Service      │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                  │                  │              │
-│         └──────────────────┴──────────────────┘              │
-│                            │                                 │
-└────────────────────────────┼─────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   CAMADA DE APLICAÇÃO                       │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         INBOUND PORTS (Use Cases)                    │  │
-│  │  ┌──────────────────┐  ┌──────────────────┐         │  │
-│  │  │ ApprovePayment   │  │ CancelPayment    │         │  │
-│  │  │ UseCase          │  │ UseCase          │         │  │
-│  │  └──────────────────┘  └──────────────────┘         │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                            │                                │
-│                            ▼                                │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         USE CASE SERVICES                            │  │
-│  │  ┌──────────────────┐  ┌──────────────────┐         │  │
-│  │  │ ApprovePayment   │  │ CancelPayment    │         │  │
-│  │  │ Service          │  │ Service          │         │  │
-│  │  └────────┬─────────┘  └────────┬─────────┘         │  │
-│  └───────────┼──────────────────────┼───────────────────┘  │
-│              │                      │                       │
-│              ▼                      ▼                       │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         OUTBOUND PORTS (Dependencies)                │  │
-│  │  ┌─────────────────┐  ┌─────────────────┐           │  │
-│  │  │ PaymentRepo     │  │ EventPublisher  │           │  │
-│  │  │ Port            │  │ Port            │           │  │
-│  │  └─────────────────┘  └─────────────────┘           │  │
-│  └──────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────┘
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      CAMADA DE DOMÍNIO                      │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              DOMAIN MODELS (PURO!)                   │  │
-│  │  ┌──────────────────┐  ┌──────────────────┐         │  │
-│  │  │ PaymentDomain    │  │ PaymentStatus    │         │  │
-│  │  │ - paymentId      │  │ - PENDING        │         │  │
-│  │  │ - amount         │  │ - APPROVED       │         │  │
-│  │  │ - status         │  │ - CANCELED       │         │  │
-│  │  │                  │  └──────────────────┘         │  │
-│  │  │ + approve()      │                               │  │
-│  │  │ + cancel()       │                               │  │
-│  │  └──────────────────┘                               │  │
-│  │                                                      │  │
-│  │  ┌──────────────────────────────────────────────┐   │  │
-│  │  │        DOMAIN EXCEPTIONS                     │   │  │
-│  │  │  - InvalidPaymentException                   │   │  │
-│  │  │  - PaymentNotFoundException                  │   │  │
-│  │  └──────────────────────────────────────────────┘   │  │
-│  └──────────────────────────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────┘
-                             ▲
-                             │ (implementa ports)
-┌─────────────────────────────────────────────────────────────┐
-│                  CAMADA DE INFRAESTRUTURA                   │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              OUTBOUND ADAPTERS                       │  │
-│  │  ┌──────────────────┐  ┌──────────────────┐         │  │
-│  │  │ JPA Adapter      │  │ Kafka Adapter    │         │  │
-│  │  │ ┌──────────────┐ │  │ ┌──────────────┐ │         │  │
-│  │  │ │PaymentEntity │ │  │ │PaymentEvent  │ │         │  │
-│  │  │ │(@Entity)     │ │  │ │              │ │         │  │
-│  │  │ └──────────────┘ │  │ └──────────────┘ │         │  │
-│  │  │ ┌──────────────┐ │  │ ┌──────────────┐ │         │  │
-│  │  │ │JpaRepository │ │  │ │KafkaTemplate │ │         │  │
-│  │  │ └──────────────┘ │  │ └──────────────┘ │         │  │
-│  │  │ ┌──────────────┐ │  │ ┌──────────────┐ │         │  │
-│  │  │ │Mapper        │ │  │ │Mapper        │ │         │  │
-│  │  │ └──────────────┘ │  │ └──────────────┘ │         │  │
-│  │  └──────────────────┘  └──────────────────┘         │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              CONFIGURATIONS                          │  │
-│  │  - KafkaConfig                                       │  │
-│  │  - JpaConfig                                         │  │
-│  │  - BeanConfig                                        │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│   HEXÁGONO = DOMÍNIO ISOLADO               │
+│                                            │
+│   ┌────────────────────────────────┐       │
+│   │                                │       │
+│   │        APPLICATION             │       │
+│   │      (Use Cases)               │       │
+│   │                                │       │
+│   │   ┌────────────────────┐       │       │
+│   │   │                    │       │       │
+│   │   │      DOMAIN        │       │       │
+│   │   │   (Entities, VOs)  │       │       │
+│   │   │                    │       │       │
+│   │   └────────────────────┘       │       │
+│   │                                │       │
+│   └────────────────────────────────┘       │
+│                                            │
+└────────────────────────────────────────────┘
+         ↑              ↑              ↑
+       PORT           PORT           PORT
+         ↑              ↑              ↑
+      ADAPTER        ADAPTER        ADAPTER
+     (REST API)    (PostgreSQL)    (Kafka)
 ```
+
+**Conceitos-chave:**
+- **Hexágono** = Domínio + Application (núcleo da aplicação)
+- **Ports** = Interfaces (contratos)
+- **Adapters** = Implementações (tecnologias específicas)
+- **Dependência** = SEMPRE aponta para DENTRO (para o hexágono)
 
 ---
 
-## 2. Estrutura Completa do Projeto
+## 2. Por Que Hexagonal e Não Camadas
 
-### Organização de Pastas (Spring Boot)
-
-```
-src/main/java/com/empresa/projeto/
-│
-├── domain/                                    # CAMADA 1: DOMÍNIO
-│   ├── model/                                 # Entidades de negócio
-│   │   ├── PaymentDomain.java                # Modelo PURO (sem @Entity)
-│   │   ├── PaymentStatus.java                # Enums
-│   │   └── OrderDomain.java
-│   │
-│   ├── exception/                             # Exceções de negócio
-│   │   ├── InvalidPaymentException.java
-│   │   ├── PaymentNotFoundException.java
-│   │   └── InsufficientBalanceException.java
-│   │
-│   └── service/                               # Serviços de domínio (opcional)
-│       └── PaymentCalculationService.java    # Lógicas complexas de cálculo
-│
-├── application/                               # CAMADA 2: APLICAÇÃO
-│   ├── port/
-│   │   ├── in/                                # PORTAS DE ENTRADA (Use Cases)
-│   │   │   ├── ApprovePaymentUseCase.java    # Interface do caso de uso
-│   │   │   ├── CancelPaymentUseCase.java
-│   │   │   ├── FindPaymentUseCase.java
-│   │   │   └── ProcessRefundUseCase.java
-│   │   │
-│   │   └── out/                               # PORTAS DE SAÍDA (Dependências)
-│   │       ├── PaymentRepositoryPort.java    # Interface para persistência
-│   │       ├── PaymentEventPublisherPort.java # Interface para eventos
-│   │       ├── NotificationPort.java         # Interface para notificações
-│   │       └── AuditPort.java                # Interface para auditoria
-│   │
-│   ├── service/                               # IMPLEMENTAÇÃO DOS USE CASES
-│   │   ├── ApprovePaymentService.java        # Implementa ApprovePaymentUseCase
-│   │   ├── CancelPaymentService.java
-│   │   ├── FindPaymentService.java
-│   │   └── ProcessRefundService.java
-│   │
-│   └── command/                               # Commands e Responses
-│       ├── ApprovePaymentCommand.java        # Input do use case
-│       ├── CancelPaymentCommand.java
-│       ├── PaymentResponse.java              # Output do use case
-│       └── PaymentListResponse.java
-│
-└── infrastructure/                            # CAMADA 3: INFRAESTRUTURA
-    ├── adapter/
-    │   ├── in/                                # ADAPTERS DE ENTRADA
-    │   │   └── web/                           # REST API
-    │   │       ├── controller/
-    │   │       │   ├── PaymentController.java
-    │   │       │   └── HealthController.java
-    │   │       ├── dto/                       # DTOs HTTP
-    │   │       │   ├── PaymentRequestDto.java
-    │   │       │   ├── PaymentResponseDto.java
-    │   │       │   └── ErrorResponseDto.java
-    │   │       ├── mapper/                    # Mappers HTTP
-    │   │       │   └── PaymentWebMapper.java
-    │   │       └── exception/                 # Exception handlers
-    │   │           └── GlobalExceptionHandler.java
-    │   │
-    │   └── out/                               # ADAPTERS DE SAÍDA
-    │       ├── persistence/                   # Persistência (JPA)
-    │       │   ├── entity/
-    │       │   │   ├── PaymentEntity.java    # @Entity (JPA)
-    │       │   │   └── AuditEntity.java
-    │       │   ├── repository/
-    │       │   │   ├── PaymentJpaRepository.java # Spring Data
-    │       │   │   └── AuditJpaRepository.java
-    │       │   ├── mapper/
-    │       │   │   └── PaymentPersistenceMapper.java
-    │       │   └── PaymentPersistenceAdapter.java # Implementa Port
-    │       │
-    │       ├── messaging/                     # Mensageria (Kafka)
-    │       │   ├── event/
-    │       │   │   ├── PaymentApprovedEvent.java
-    │       │   │   └── PaymentCanceledEvent.java
-    │       │   ├── producer/
-    │       │   │   └── PaymentEventProducer.java
-    │       │   ├── mapper/
-    │       │   │   └── PaymentEventMapper.java
-    │       │   └── KafkaEventPublisherAdapter.java # Implementa Port
-    │       │
-    │       ├── notification/                  # Notificações externas
-    │       │   ├── client/
-    │       │   │   └── EmailClient.java
-    │       │   └── EmailNotificationAdapter.java # Implementa Port
-    │       │
-    │       └── audit/                         # Auditoria
-    │           └── AuditAdapter.java          # Implementa Port
-    │
-    └── config/                                # Configurações
-        ├── JpaConfig.java
-        ├── KafkaConfig.java
-        ├── BeanConfig.java
-        └── SecurityConfig.java
-```
-
-### Arquivos de Recursos
+### Problema com Arquitetura em Camadas Tradicional
 
 ```
-src/main/resources/
-│
-├── application.yaml              # Configurações principais
-├── application-dev.yaml          # Perfil desenvolvimento
-├── application-prod.yaml         # Perfil produção
-│
-└── db/
-    └── migration/                # Flyway migrations
-        ├── V1__create_payment_table.sql
-        ├── V2__add_audit_table.sql
-        └── V3__add_indexes.sql
+❌ ARQUITETURA EM CAMADAS TRADICIONAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────┐
+│        PRESENTATION                  │  ← UI / REST API
+├──────────────────────────────────────┤
+│        BUSINESS LOGIC                │  ← Regras de negócio
+├──────────────────────────────────────┤
+│        DATA ACCESS                   │  ← Repository / DAO
+├──────────────────────────────────────┤
+│        DATABASE                      │  ← PostgreSQL
+└──────────────────────────────────────┘
+
+PROBLEMAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ❌ BUSINESS LOGIC DEPENDE DE DATA ACCESS
+   └─ Business Logic conhece Repository (JPA)
+   └─ Trocar banco? Business Logic muda! 💥
+
+2. ❌ DIFÍCIL TESTAR
+   └─ Testar Business Logic = precisa Data Access
+   └─ Precisa banco de dados para teste!
+
+3. ❌ LÓGICA VAZA PARA CAMADAS
+   └─ Validação no Controller
+   └─ Cálculo no Repository
+   └─ Regra espalhada!
+
+4. ❌ ACOPLAMENTO A TECNOLOGIAS
+   └─ Business Logic usa anotações JPA
+   └─ Business Logic usa classes do Spring
+   └─ Impossível mudar framework!
+
+5. ❌ FLUXO RÍGIDO (sempre de cima para baixo)
+   └─ Presentation → Business → Data → DB
+   └─ Não há como inverter!
+
+
+✅ ARQUITETURA HEXAGONAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        ┌─────────────────────┐
+        │   REST API          │  ← Inbound Adapter
+        │   (Controller)      │
+        └──────────┬──────────┘
+                   │ implementa
+                   ↓
+        ┌──────────────────────┐
+        │   Inbound Port       │  ← Interface
+        │   (Use Case)         │
+        └──────────┬───────────┘
+                   │ usa
+                   ↓
+   ┌───────────────────────────────────┐
+   │         HEXÁGONO                  │
+   │                                   │
+   │   ┌───────────────────────┐       │
+   │   │   APPLICATION         │       │
+   │   │   (Use Case Service)  │       │
+   │   └───────────┬───────────┘       │
+   │               │                   │
+   │               ↓ depende           │
+   │   ┌───────────────────────┐       │
+   │   │   DOMAIN              │       │
+   │   │   (Entities, VOs)     │       │
+   │   │   REGRAS DE NEGÓCIO   │       │
+   │   │   (PURO!)             │       │
+   │   └───────────────────────┘       │
+   │                                   │
+   └───────────────────────────────────┘
+                   │ define
+                   ↓
+        ┌──────────────────────┐
+        │   Outbound Port      │  ← Interface
+        │   (Repository)       │
+        └──────────┬───────────┘
+                   ↑ implementa
+        ┌──────────┴──────────┐
+        │   JPA Adapter       │  ← Outbound Adapter
+        │   (PostgreSQL)      │
+        └─────────────────────┘
+
+BENEFÍCIOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ✅ DOMAIN INDEPENDENTE
+   └─ Domain NÃO conhece JPA, Spring, Kafka
+   └─ Domain PURO (só Java + lógica de negócio)!
+
+2. ✅ FÁCIL TESTAR
+   └─ Testar Domain = ZERO dependências externas
+   └─ Testes em milissegundos!
+
+3. ✅ LÓGICA CENTRALIZADA
+   └─ TODA regra de negócio no Domain
+   └─ Zero lógica nos Adapters!
+
+4. ✅ TECNOLOGIAS SUBSTITUÍVEIS
+   └─ Trocar PostgreSQL → MongoDB? Só muda Adapter!
+   └─ Domain e Application = INTACTOS!
+
+5. ✅ FLUXO INVERTIDO (Dependency Inversion!)
+   └─ Adapters dependem de Ports
+   └─ Ports definidas pelo DOMÍNIO!
+
+
+COMPARAÇÃO LADO A LADO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cenário: Trocar PostgreSQL por MongoDB
+
+❌ CAMADAS:
+   1. Mudar Data Access Layer ✏️
+   2. Mudar Business Logic (conhece JPA!) ✏️
+   3. Atualizar testes (quebram!) ✏️
+   4. Rezar para não ter bugs 🙏
+   RESULTADO: 3 camadas mudaram! 💥
+
+✅ HEXAGONAL:
+   1. Criar MongoAdapter (implementa Port) ✏️
+   2. Configurar Spring para injetar novo Adapter ✏️
+   3. FIM! ✅
+   RESULTADO: Domain + Application = INTOCADOS! 🎉
 ```
 
 ---
 
-## 3. Camadas da Arquitetura
+## 3. Ports vs Adapters
 
-### 3.1 Domain Layer - O Coração do Sistema
+### O que são Ports?
 
-#### O Que É?
-
-A camada de domínio contém **TODA** a lógica de negócio. É o código mais importante e mais protegido do sistema.
-
-#### Regras de Ouro
-
-```java
-// ✅ PERMITIDO no Domain
-- Regras de negócio
-- Validações de dados
-- Cálculos de negócio
-- Transições de estado
-- Domain Events
-- Value Objects
-
-// ❌ PROIBIDO no Domain
-- @Entity, @Document, @Table (JPA/Mongo)
-- @RestController, @RequestMapping (Spring Web)
-- @KafkaListener (Kafka)
-- Qualquer import de javax.*, jakarta.*, org.springframework.*
-- SQL, HTTP, JSON
 ```
+PORT (PORTA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-#### Exemplo Completo de Domain Model
+DEFINIÇÃO:
+  Interface (contrato) que define COMO o hexágono
+  se comunica com o mundo externo.
 
-```java
-package com.empresa.projeto.domain.model;
+CARACTERÍSTICAS:
+  ✅ Definida DENTRO do hexágono (Domain/Application)
+  ✅ Interface Java (abstração)
+  ✅ Vocabulário do DOMÍNIO (não técnico)
+  ✅ Não conhece tecnologia (JPA, Kafka, REST)
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Objects;
+TIPOS:
+  • Inbound Ports (Use Cases): QUEM usa o hexágono
+  • Outbound Ports (Dependencies): O QUE o hexágono precisa
 
-/**
- * PaymentDomain - Modelo de Domínio PURO
- *
- * CARACTERÍSTICAS:
- * - SEM annotations de frameworks (@Entity, @Table, etc)
- * - Imutável (campos final sempre que possível)
- * - Self-validating (validação no construtor)
- * - Rich behavior (métodos de negócio)
- */
-public class PaymentDomain {
+EXEMPLO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // ========== ATRIBUTOS (IMUTÁVEIS quando possível) ==========
+// ✅ Inbound Port (Use Case)
+package com.mvbr.store.application.port.in;
 
-    private final String paymentId;
-    private final String userId;
-    private final BigDecimal amount;
-    private final String currency;
-    private PaymentStatus status;              // Mutável (muda com approve/cancel)
-    private final Instant createdAt;
-    private Instant updatedAt;
-
-    // ========== CONSTRUTORES ==========
-
-    /**
-     * Construtor para CRIAR um novo pagamento.
-     * Usa este construtor quando RECEBE dados do usuário.
-     */
-    public PaymentDomain(String paymentId, String userId,
-                         BigDecimal amount, String currency) {
-        // Validações AQUI - Fail Fast!
-        this.paymentId = requireNonBlank(paymentId, "Payment ID is required");
-        this.userId = requireNonBlank(userId, "User ID is required");
-        this.amount = requirePositive(amount, "Amount must be positive");
-        this.currency = requireNonBlank(currency, "Currency is required").toUpperCase();
-
-        // Estado inicial
-        this.status = PaymentStatus.PENDING;
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * Construtor para RESTAURAR do banco de dados.
-     * Usa este construtor quando o adapter JPA carrega dados persistidos.
-     */
-    public PaymentDomain(String paymentId, String userId,
-                         BigDecimal amount, String currency,
-                         PaymentStatus status, Instant createdAt,
-                         Instant updatedAt) {
-        this.paymentId = paymentId;
-        this.userId = userId;
-        this.amount = amount;
-        this.currency = currency;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    // ========== LÓGICA DE NEGÓCIO (MÉTODOS PÚBLICOS) ==========
-
-    /**
-     * Aprova o pagamento.
-     *
-     * REGRAS DE NEGÓCIO:
-     * - Só pode aprovar se status for PENDING
-     * - Pagamento cancelado NÃO pode ser aprovado
-     * - Atualiza timestamp
-     */
-    public void approve() {
-        if (status == PaymentStatus.CANCELED) {
-            throw new IllegalStateException(
-                "Cannot approve canceled payment: " + paymentId
-            );
-        }
-
-        if (status == PaymentStatus.APPROVED) {
-            return; // Já está aprovado (idempotência)
-        }
-
-        this.status = PaymentStatus.APPROVED;
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * Cancela o pagamento.
-     *
-     * REGRAS DE NEGÓCIO:
-     * - Só pode cancelar se status for PENDING
-     * - Pagamento aprovado NÃO pode ser cancelado (precisa refund)
-     */
-    public void cancel() {
-        if (status == PaymentStatus.APPROVED) {
-            throw new IllegalStateException(
-                "Cannot cancel approved payment: " + paymentId +
-                ". Use refund instead."
-            );
-        }
-
-        if (status == PaymentStatus.CANCELED) {
-            return; // Já está cancelado (idempotência)
-        }
-
-        this.status = PaymentStatus.CANCELED;
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * Processa reembolso (estorno).
-     *
-     * REGRAS DE NEGÓCIO:
-     * - Só pode estornar pagamento APROVADO
-     */
-    public void refund() {
-        if (status != PaymentStatus.APPROVED) {
-            throw new IllegalStateException(
-                "Can only refund approved payments. Current status: " + status
-            );
-        }
-
-        this.status = PaymentStatus.REFUNDED;
-        this.updatedAt = Instant.now();
-    }
-
-    // ========== MÉTODOS DE CONSULTA ==========
-
-    public boolean isPending() {
-        return status == PaymentStatus.PENDING;
-    }
-
-    public boolean isApproved() {
-        return status == PaymentStatus.APPROVED;
-    }
-
-    public boolean isCanceled() {
-        return status == PaymentStatus.CANCELED;
-    }
-
-    public boolean canBeModified() {
-        return status == PaymentStatus.PENDING;
-    }
-
-    // ========== VALIDAÇÕES PRIVADAS ==========
-
-    private String requireNonBlank(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new InvalidPaymentException(message);
-        }
-        return value;
-    }
-
-    private BigDecimal requirePositive(BigDecimal value, String message) {
-        if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidPaymentException(message);
-        }
-        return value;
-    }
-
-    // ========== GETTERS (SOMENTE LEITURA) ==========
-
-    public String getPaymentId() { return paymentId; }
-    public String getUserId() { return userId; }
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
-    public PaymentStatus getStatus() { return status; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-
-    // ========== EQUALS & HASHCODE (baseado em paymentId) ==========
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PaymentDomain)) return false;
-        PaymentDomain that = (PaymentDomain) o;
-        return Objects.equals(paymentId, that.paymentId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(paymentId);
-    }
-
-    // ========== TO STRING (para debug) ==========
-
-    @Override
-    public String toString() {
-        return "PaymentDomain{" +
-                "paymentId='" + paymentId + '\'' +
-                ", userId='" + userId + '\'' +
-                ", amount=" + amount +
-                ", currency='" + currency + '\'' +
-                ", status=" + status +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
-}
-```
-
-#### Enum de Status
-
-```java
-package com.empresa.projeto.domain.model;
-
-/**
- * Status possíveis de um pagamento.
- *
- * FLUXO:
- * PENDING → APPROVED → (opcional) REFUNDED
- *    ↓
- * CANCELED
- */
-public enum PaymentStatus {
-    PENDING,
-    APPROVED,
-    CANCELED,
-    REFUNDED
-}
-```
-
-#### Exceções de Domínio
-
-```java
-package com.empresa.projeto.domain.exception;
-
-/**
- * Exceção lançada quando dados de pagamento são inválidos.
- */
-public class InvalidPaymentException extends RuntimeException {
-
-    public InvalidPaymentException(String message) {
-        super(message);
-    }
-
-    public InvalidPaymentException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
-```
-
-```java
-package com.empresa.projeto.domain.exception;
-
-/**
- * Exceção lançada quando pagamento não é encontrado.
- */
-public class PaymentNotFoundException extends RuntimeException {
-
-    private final String paymentId;
-
-    public PaymentNotFoundException(String paymentId) {
-        super("Payment not found: " + paymentId);
-        this.paymentId = paymentId;
-    }
-
-    public String getPaymentId() {
-        return paymentId;
-    }
-}
-```
-
-### 3.2 Application Layer - Orquestração
-
-#### O Que É?
-
-A camada de aplicação **orquestra** o fluxo de dados entre a apresentação e o domínio. Ela NÃO contém lógica de negócio, apenas coordena.
-
-#### Inbound Ports (Use Cases)
-
-```java
-package com.empresa.projeto.application.port.in;
-
-import com.empresa.projeto.application.command.ApprovePaymentCommand;
-import com.empresa.projeto.application.command.PaymentResponse;
-
-/**
- * INBOUND PORT - Caso de Uso: Aprovar Pagamento
- *
- * Define O QUE a aplicação faz, não COMO faz.
- * Esta é a "porta de entrada" para este caso de uso.
- */
 public interface ApprovePaymentUseCase {
-
-    /**
-     * Aprova um pagamento.
-     *
-     * @param command dados do pagamento a aprovar
-     * @return resposta com dados do pagamento aprovado
-     * @throws InvalidPaymentException se dados inválidos
-     * @throws PaymentNotFoundException se pagamento não existe
-     */
-    PaymentResponse approve(ApprovePaymentCommand command);
+    PaymentResponse execute(ApprovePaymentCommand command);
 }
-```
 
-#### Outbound Ports (Dependências)
+// ✅ Outbound Port (Dependency)
+package com.mvbr.store.application.port.out;
 
-```java
-package com.empresa.projeto.application.port.out;
-
-import com.empresa.projeto.domain.model.PaymentDomain;
-import java.util.Optional;
-
-/**
- * OUTBOUND PORT - Repositório de Pagamentos
- *
- * Define O QUE a aplicação PRECISA da infraestrutura.
- * A implementação será um ADAPTER na camada de infraestrutura.
- */
-public interface PaymentRepositoryPort {
-
-    /**
-     * Salva um pagamento.
-     */
-    PaymentDomain save(PaymentDomain payment);
-
-    /**
-     * Busca pagamento por ID.
-     */
-    Optional<PaymentDomain> findById(String paymentId);
-
-    /**
-     * Verifica se pagamento existe.
-     */
-    boolean existsById(String paymentId);
-
-    /**
-     * Lista pagamentos de um usuário.
-     */
-    List<PaymentDomain> findByUserId(String userId);
+public interface PaymentRepository {
+    Payment save(Payment payment);
+    Optional<Payment> findById(PaymentId paymentId);
 }
+
+LINGUAGEM DO DOMÍNIO!
+├─ ApprovePaymentUseCase (não "PaymentController")
+├─ PaymentRepository (não "PaymentDAO" ou "PaymentJpaRepository")
+└─ save(Payment) (não "persist(PaymentEntity)")
 ```
 
-```java
-package com.empresa.projeto.application.port.out;
+### O que são Adapters?
 
-import com.empresa.projeto.domain.model.PaymentDomain;
-
-/**
- * OUTBOUND PORT - Publicador de Eventos
- */
-public interface PaymentEventPublisherPort {
-
-    /**
-     * Publica evento de pagamento aprovado.
-     */
-    void publishPaymentApproved(PaymentDomain payment);
-
-    /**
-     * Publica evento de pagamento cancelado.
-     */
-    void publishPaymentCanceled(PaymentDomain payment);
-
-    /**
-     * Publica evento de reembolso.
-     */
-    void publishPaymentRefunded(PaymentDomain payment);
-}
 ```
+ADAPTER (ADAPTADOR)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-#### Commands e Responses
+DEFINIÇÃO:
+  Implementação CONCRETA de um Port, usando
+  tecnologia específica (JPA, Kafka, REST, etc).
 
-```java
-package com.empresa.projeto.application.command;
+CARACTERÍSTICAS:
+  ✅ Vive FORA do hexágono (Infrastructure)
+  ✅ Classe concreta (implementação)
+  ✅ Conhece tecnologia (Spring, JPA, Kafka)
+  ✅ ADAPTA tecnologia para Port
 
-import java.math.BigDecimal;
+TIPOS:
+  • Inbound Adapters (Drivers): REST API, GraphQL, CLI
+  • Outbound Adapters (Driven): JPA, Kafka, Redis, APIs externas
 
-/**
- * Command - Aprovar Pagamento
- *
- * Representa a INTENÇÃO do usuário.
- * Imutável (record).
- */
-public record ApprovePaymentCommand(
-    String paymentId,
-    String userId,
-    BigDecimal amount,
-    String currency
-) {}
-```
+EXEMPLO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-```java
-package com.empresa.projeto.application.command;
+// ✅ Inbound Adapter (REST)
+package com.mvbr.store.infrastructure.adapter.in.rest;
 
-import com.empresa.projeto.domain.model.PaymentStatus;
-import java.math.BigDecimal;
-import java.time.Instant;
-
-/**
- * Response - Resposta de Pagamento
- *
- * Representa o RESULTADO do caso de uso.
- * Imutável (record).
- */
-public record PaymentResponse(
-    String paymentId,
-    String userId,
-    BigDecimal amount,
-    String currency,
-    PaymentStatus status,
-    Instant createdAt,
-    Instant updatedAt
-) {}
-```
-
-#### Use Case Service (Implementação)
-
-```java
-package com.empresa.projeto.application.service;
-
-import com.empresa.projeto.application.command.ApprovePaymentCommand;
-import com.empresa.projeto.application.command.PaymentResponse;
-import com.empresa.projeto.application.port.in.ApprovePaymentUseCase;
-import com.empresa.projeto.application.port.out.PaymentEventPublisherPort;
-import com.empresa.projeto.application.port.out.PaymentRepositoryPort;
-import com.empresa.projeto.domain.model.PaymentDomain;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-/**
- * Service que implementa o Use Case de Aprovar Pagamento.
- *
- * RESPONSABILIDADES:
- * 1. Receber Command
- * 2. Criar/buscar Domain Object
- * 3. Chamar método de negócio do Domain
- * 4. Persistir via Port
- * 5. Publicar evento via Port
- * 6. Retornar Response
- *
- * NÃO TEM LÓGICA DE NEGÓCIO! Apenas orquestra.
- */
-@Service
-public class ApprovePaymentService implements ApprovePaymentUseCase {
-
-    private final PaymentRepositoryPort paymentRepository;
-    private final PaymentEventPublisherPort eventPublisher;
-
-    public ApprovePaymentService(
-            PaymentRepositoryPort paymentRepository,
-            PaymentEventPublisherPort eventPublisher) {
-        this.paymentRepository = paymentRepository;
-        this.eventPublisher = eventPublisher;
-    }
-
-    @Override
-    @Transactional
-    public PaymentResponse approve(ApprovePaymentCommand command) {
-
-        // 1. Criar objeto de domínio
-        //    (validação acontece no construtor do PaymentDomain)
-        PaymentDomain payment = new PaymentDomain(
-            command.paymentId(),
-            command.userId(),
-            command.amount(),
-            command.currency()
-        );
-
-        // 2. Executar lógica de negócio
-        //    (lógica está NO DOMAIN, não aqui!)
-        payment.approve();
-
-        // 3. Persistir
-        //    (usa PORTA, não sabe se é JPA, MongoDB, etc)
-        PaymentDomain savedPayment = paymentRepository.save(payment);
-
-        // 4. Publicar evento
-        //    (usa PORTA, não sabe se é Kafka, RabbitMQ, etc)
-        eventPublisher.publishPaymentApproved(savedPayment);
-
-        // 5. Retornar resposta
-        return new PaymentResponse(
-            savedPayment.getPaymentId(),
-            savedPayment.getUserId(),
-            savedPayment.getAmount(),
-            savedPayment.getCurrency(),
-            savedPayment.getStatus(),
-            savedPayment.getCreatedAt(),
-            savedPayment.getUpdatedAt()
-        );
-    }
-}
-```
-
-### 3.3 Infrastructure Layer - Implementações Técnicas
-
-#### Adapter de Persistência (JPA)
-
-**Entidade JPA:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.persistence.entity;
-
-import com.empresa.projeto.domain.model.PaymentStatus;
-import jakarta.persistence.*;
-import java.math.BigDecimal;
-import java.time.Instant;
-
-/**
- * PaymentEntity - Entidade JPA
- *
- * CONTÉM:
- * - Annotations JPA (@Entity, @Id, etc)
- * - Mapeamento de tabela
- * - Getters/Setters
- *
- * NÃO CONTÉM:
- * - Lógica de negócio
- * - Validações de negócio
- */
-@Entity
-@Table(name = "payment")
-public class PaymentEntity {
-
-    @Id
-    @Column(name = "payment_id", length = 36, nullable = false)
-    private String paymentId;
-
-    @Column(name = "user_id", length = 36, nullable = false)
-    private String userId;
-
-    @Column(name = "amount", precision = 19, scale = 2, nullable = false)
-    private BigDecimal amount;
-
-    @Column(name = "currency", length = 3, nullable = false)
-    private String currency;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
-    private PaymentStatus status;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
-    // Construtor padrão (JPA exige)
-    protected PaymentEntity() {}
-
-    // Construtor com todos os campos
-    public PaymentEntity(String paymentId, String userId, BigDecimal amount,
-                         String currency, PaymentStatus status,
-                         Instant createdAt, Instant updatedAt) {
-        this.paymentId = paymentId;
-        this.userId = userId;
-        this.amount = amount;
-        this.currency = currency;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    // Getters e Setters
-    public String getPaymentId() { return paymentId; }
-    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
-
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-
-    public BigDecimal getAmount() { return amount; }
-    public void setAmount(BigDecimal amount) { this.amount = amount; }
-
-    public String getCurrency() { return currency; }
-    public void setCurrency(String currency) { this.currency = currency; }
-
-    public PaymentStatus getStatus() { return status; }
-    public void setStatus(PaymentStatus status) { this.status = status; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-}
-```
-
-**Mapper (Domain ↔ Entity):**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.persistence.mapper;
-
-import com.empresa.projeto.domain.model.PaymentDomain;
-import com.empresa.projeto.infrastructure.adapter.out.persistence.entity.PaymentEntity;
-import org.springframework.stereotype.Component;
-
-/**
- * Mapper - Conversão entre Domain e Entity
- *
- * ANTI-CORRUPTION LAYER:
- * Previne que JPA "vaze" para o domain.
- */
-@Component
-public class PaymentPersistenceMapper {
-
-    /**
-     * Converte Domain → Entity (para salvar no banco)
-     */
-    public PaymentEntity toEntity(PaymentDomain domain) {
-        if (domain == null) return null;
-
-        return new PaymentEntity(
-            domain.getPaymentId(),
-            domain.getUserId(),
-            domain.getAmount(),
-            domain.getCurrency(),
-            domain.getStatus(),
-            domain.getCreatedAt(),
-            domain.getUpdatedAt()
-        );
-    }
-
-    /**
-     * Converte Entity → Domain (ao carregar do banco)
-     */
-    public PaymentDomain toDomain(PaymentEntity entity) {
-        if (entity == null) return null;
-
-        // Usa construtor de "restauração"
-        return new PaymentDomain(
-            entity.getPaymentId(),
-            entity.getUserId(),
-            entity.getAmount(),
-            entity.getCurrency(),
-            entity.getStatus(),
-            entity.getCreatedAt(),
-            entity.getUpdatedAt()
-        );
-    }
-}
-```
-
-**Spring Data JPA Repository:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.persistence.repository;
-
-import com.empresa.projeto.infrastructure.adapter.out.persistence.entity.PaymentEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-
-/**
- * Spring Data JPA Repository
- *
- * Spring gera implementação automaticamente.
- */
-@Repository
-public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, String> {
-
-    // Métodos automáticos:
-    // - save()
-    // - findById()
-    // - existsById()
-    // - delete()
-
-    // Métodos customizados (Spring gera query automaticamente)
-    List<PaymentEntity> findByUserId(String userId);
-}
-```
-
-**Adapter (implementa a Porta):**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.persistence;
-
-import com.empresa.projeto.application.port.out.PaymentRepositoryPort;
-import com.empresa.projeto.domain.model.PaymentDomain;
-import com.empresa.projeto.infrastructure.adapter.out.persistence.entity.PaymentEntity;
-import com.empresa.projeto.infrastructure.adapter.out.persistence.mapper.PaymentPersistenceMapper;
-import com.empresa.projeto.infrastructure.adapter.out.persistence.repository.PaymentJpaRepository;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-/**
- * ADAPTER de Persistência
- *
- * Implementa PaymentRepositoryPort usando JPA.
- *
- * FLUXO:
- * Domain → Mapper → Entity → JPA → Banco
- * Banco → JPA → Entity → Mapper → Domain
- */
-@Component
-public class PaymentPersistenceAdapter implements PaymentRepositoryPort {
-
-    private final PaymentJpaRepository jpaRepository;
-    private final PaymentPersistenceMapper mapper;
-
-    public PaymentPersistenceAdapter(
-            PaymentJpaRepository jpaRepository,
-            PaymentPersistenceMapper mapper) {
-        this.jpaRepository = jpaRepository;
-        this.mapper = mapper;
-    }
-
-    @Override
-    public PaymentDomain save(PaymentDomain payment) {
-        // Domain → Entity
-        PaymentEntity entity = mapper.toEntity(payment);
-
-        // JPA save
-        PaymentEntity savedEntity = jpaRepository.save(entity);
-
-        // Entity → Domain
-        return mapper.toDomain(savedEntity);
-    }
-
-    @Override
-    public Optional<PaymentDomain> findById(String paymentId) {
-        return jpaRepository.findById(paymentId)
-                .map(mapper::toDomain);
-    }
-
-    @Override
-    public boolean existsById(String paymentId) {
-        return jpaRepository.existsById(paymentId);
-    }
-
-    @Override
-    public List<PaymentDomain> findByUserId(String userId) {
-        return jpaRepository.findByUserId(userId)
-                .stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
-    }
-}
-```
-
-#### Adapter de Mensageria (Kafka)
-
-**Evento Kafka:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.messaging.event;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-
-/**
- * Evento - Pagamento Aprovado
- *
- * Estrutura do evento publicado no Kafka.
- */
-public record PaymentApprovedEvent(
-    String eventId,         // UUID único do evento
-    String paymentId,       // ID do pagamento
-    String userId,          // ID do usuário (chave de partição)
-    BigDecimal amount,      // Valor
-    String currency,        // Moeda
-    String status,          // Status
-    Instant timestamp       // Timestamp do evento
-) {}
-```
-
-**Mapper (Domain → Event):**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.messaging.mapper;
-
-import com.empresa.projeto.domain.model.PaymentDomain;
-import com.empresa.projeto.infrastructure.adapter.out.messaging.event.PaymentApprovedEvent;
-import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.UUID;
-
-/**
- * Mapper - Domain para Eventos Kafka
- */
-@Component
-public class PaymentEventMapper {
-
-    public PaymentApprovedEvent toPaymentApprovedEvent(PaymentDomain domain) {
-        return new PaymentApprovedEvent(
-            UUID.randomUUID().toString(),     // eventId único
-            domain.getPaymentId(),
-            domain.getUserId(),
-            domain.getAmount(),
-            domain.getCurrency(),
-            domain.getStatus().name(),
-            Instant.now()
-        );
-    }
-}
-```
-
-**Kafka Producer:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.messaging.producer;
-
-import com.empresa.projeto.infrastructure.adapter.out.messaging.event.PaymentApprovedEvent;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-
-/**
- * Producer Kafka para eventos de pagamento.
- */
-@Component
-public class PaymentEventProducer {
-
-    private static final Logger log = LoggerFactory.getLogger(PaymentEventProducer.class);
-
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-
-    @Value("${kafka.topics.payment-approved}")
-    private String paymentApprovedTopic;
-
-    public PaymentEventProducer(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
-
-    /**
-     * Publica evento de pagamento aprovado.
-     *
-     * @param event evento a publicar
-     */
-    public void publishPaymentApproved(PaymentApprovedEvent event) {
-
-        // Criar record com headers
-        ProducerRecord<String, Object> record = new ProducerRecord<>(
-            paymentApprovedTopic,
-            event.userId(),  // Key = userId (para particionamento)
-            event            // Value = evento
-        );
-
-        // Adicionar headers (metadados)
-        record.headers().add(new RecordHeader(
-            "event-type",
-            "PAYMENT_APPROVED".getBytes(StandardCharsets.UTF_8)
-        ));
-        record.headers().add(new RecordHeader(
-            "event-id",
-            event.eventId().getBytes(StandardCharsets.UTF_8)
-        ));
-
-        // Enviar com callback
-        kafkaTemplate.send(record).whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("Failed to publish PaymentApproved event: {}", event, ex);
-            } else {
-                log.info("Published PaymentApproved event: paymentId={}, partition={}, offset={}",
-                    event.paymentId(),
-                    result.getRecordMetadata().partition(),
-                    result.getRecordMetadata().offset()
-                );
-            }
-        });
-    }
-}
-```
-
-**Adapter Kafka (implementa a Porta):**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.out.messaging;
-
-import com.empresa.projeto.application.port.out.PaymentEventPublisherPort;
-import com.empresa.projeto.domain.model.PaymentDomain;
-import com.empresa.projeto.infrastructure.adapter.out.messaging.event.PaymentApprovedEvent;
-import com.empresa.projeto.infrastructure.adapter.out.messaging.mapper.PaymentEventMapper;
-import com.empresa.projeto.infrastructure.adapter.out.messaging.producer.PaymentEventProducer;
-import org.springframework.stereotype.Component;
-
-/**
- * ADAPTER de Mensageria (Kafka)
- *
- * Implementa PaymentEventPublisherPort usando Kafka.
- */
-@Component
-public class KafkaEventPublisherAdapter implements PaymentEventPublisherPort {
-
-    private final PaymentEventProducer eventProducer;
-    private final PaymentEventMapper eventMapper;
-
-    public KafkaEventPublisherAdapter(
-            PaymentEventProducer eventProducer,
-            PaymentEventMapper eventMapper) {
-        this.eventProducer = eventProducer;
-        this.eventMapper = eventMapper;
-    }
-
-    @Override
-    public void publishPaymentApproved(PaymentDomain payment) {
-        PaymentApprovedEvent event = eventMapper.toPaymentApprovedEvent(payment);
-        eventProducer.publishPaymentApproved(event);
-    }
-
-    @Override
-    public void publishPaymentCanceled(PaymentDomain payment) {
-        // Implementação similar...
-    }
-
-    @Override
-    public void publishPaymentRefunded(PaymentDomain payment) {
-        // Implementação similar...
-    }
-}
-```
-
-#### Adapter Web (REST Controller)
-
-**DTOs HTTP:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.in.web.dto;
-
-import java.math.BigDecimal;
-
-/**
- * DTO de entrada - Requisição HTTP
- */
-public record PaymentRequestDto(
-    String paymentId,
-    String userId,
-    BigDecimal amount,
-    String currency
-) {}
-```
-
-```java
-package com.empresa.projeto.infrastructure.adapter.in.web.dto;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-
-/**
- * DTO de saída - Resposta HTTP
- */
-public record PaymentResponseDto(
-    String paymentId,
-    String userId,
-    BigDecimal amount,
-    String currency,
-    String status,
-    Instant createdAt,
-    Instant updatedAt
-) {}
-```
-
-**Mapper Web:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.in.web.mapper;
-
-import com.empresa.projeto.application.command.ApprovePaymentCommand;
-import com.empresa.projeto.application.command.PaymentResponse;
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentRequestDto;
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentResponseDto;
-import org.springframework.stereotype.Component;
-
-/**
- * Mapper Web - DTO ↔ Command/Response
- */
-@Component
-public class PaymentWebMapper {
-
-    /**
-     * DTO → Command (entrada)
-     */
-    public ApprovePaymentCommand toCommand(PaymentRequestDto dto) {
-        return new ApprovePaymentCommand(
-            dto.paymentId(),
-            dto.userId(),
-            dto.amount(),
-            dto.currency()
-        );
-    }
-
-    /**
-     * Response → DTO (saída)
-     */
-    public PaymentResponseDto toDto(PaymentResponse response) {
-        return new PaymentResponseDto(
-            response.paymentId(),
-            response.userId(),
-            response.amount(),
-            response.currency(),
-            response.status().name(),
-            response.createdAt(),
-            response.updatedAt()
-        );
-    }
-}
-```
-
-**REST Controller:**
-
-```java
-package com.empresa.projeto.infrastructure.adapter.in.web.controller;
-
-import com.empresa.projeto.application.command.ApprovePaymentCommand;
-import com.empresa.projeto.application.command.PaymentResponse;
-import com.empresa.projeto.application.port.in.ApprovePaymentUseCase;
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentRequestDto;
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentResponseDto;
-import com.empresa.projeto.infrastructure.adapter.in.web.mapper.PaymentWebMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-/**
- * REST Controller - Pagamentos
- *
- * FLUXO:
- * HTTP Request → DTO → Command → UseCase → Response → DTO → HTTP Response
- */
 @RestController
-@RequestMapping("/api/v1/payments")
 public class PaymentController {
 
-    private final ApprovePaymentUseCase approvePaymentUseCase;
-    private final PaymentWebMapper mapper;
+    private final ApprovePaymentUseCase useCase;  // ← Port!
 
-    public PaymentController(
-            ApprovePaymentUseCase approvePaymentUseCase,
-            PaymentWebMapper mapper) {
-        this.approvePaymentUseCase = approvePaymentUseCase;
-        this.mapper = mapper;
-    }
+    @PostMapping("/api/payments/approve")
+    public ResponseEntity<PaymentResponse> approve(
+            @RequestBody ApprovePaymentRequest request) {
 
-    /**
-     * POST /api/v1/payments/approve
-     *
-     * Aprova um pagamento.
-     */
-    @PostMapping("/approve")
-    public ResponseEntity<PaymentResponseDto> approvePayment(
-            @RequestBody PaymentRequestDto request) {
-
-        // 1. DTO → Command
-        ApprovePaymentCommand command = mapper.toCommand(request);
-
-        // 2. Executar Use Case
-        PaymentResponse response = approvePaymentUseCase.approve(command);
-
-        // 3. Response → DTO
-        PaymentResponseDto dto = mapper.toDto(response);
-
-        // 4. Retornar HTTP Response
-        return ResponseEntity.status(HttpStatus.OK).body(dto);
+        ApprovePaymentCommand command = toCommand(request);
+        PaymentResponse response = useCase.execute(command);
+        return ResponseEntity.ok(response);
     }
 }
+
+// ✅ Outbound Adapter (JPA)
+package com.mvbr.store.infrastructure.adapter.out.persistence;
+
+@Repository
+public class JpaPaymentRepository implements PaymentRepository {  // ← Port!
+
+    private final PaymentJpaRepository jpaRepository;  // Spring Data
+    private final PaymentMapper mapper;
+
+    @Override
+    public Payment save(Payment payment) {
+        PaymentEntity entity = mapper.toEntity(payment);
+        PaymentEntity saved = jpaRepository.save(entity);
+        return mapper.toDomain(saved);
+    }
+}
+
+ADAPTA TECNOLOGIA PARA O DOMÍNIO!
+├─ PaymentController adapta HTTP → Use Case
+├─ JpaPaymentRepository adapta Port → JPA
+└─ Hexágono NÃO sabe que HTTP ou JPA existem!
+```
+
+### Regra de Ouro: Dependências SEMPRE para Dentro
+
+```
+DEPENDENCY RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Adapters → Ports → Application → Domain
+
+  ❌ Domain NÃO conhece Ports
+  ❌ Domain NÃO conhece Adapters
+  ❌ Application NÃO conhece Adapters
+  ✅ Application conhece Domain
+  ✅ Ports definidas por Application
+  ✅ Adapters implementam Ports
+
+
+DIAGRAMA DE DEPENDÊNCIAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌────────────────────────────────────────┐
+│   ADAPTERS (Infrastructure)            │
+│   - PaymentController.java             │
+│   - JpaPaymentRepository.java          │
+│   - KafkaEventPublisher.java           │
+└─────────────┬──────────────────────────┘
+              │ implementa (↓)
+              ↓
+┌────────────────────────────────────────┐
+│   PORTS (Application)                  │
+│   - ApprovePaymentUseCase.java         │
+│   - PaymentRepository.java             │
+│   - EventPublisher.java                │
+└─────────────┬──────────────────────────┘
+              │ usa (↓)
+              ↓
+┌────────────────────────────────────────┐
+│   APPLICATION (Use Case Services)      │
+│   - ApprovePaymentService.java         │
+└─────────────┬──────────────────────────┘
+              │ usa (↓)
+              ↓
+┌────────────────────────────────────────┐
+│   DOMAIN (Entities, Value Objects)     │
+│   - Payment.java (PURO!)               │
+│   - Money.java                         │
+│   - PaymentId.java                     │
+└────────────────────────────────────────┘
+
+✅ Dependências SEMPRE apontam para baixo!
+✅ Domain não importa NADA de outras camadas!
 ```
 
 ---
 
 ## 4. Implementação Passo a Passo
 
-### Ordem de Implementação (CRÍTICO!)
+### PASSO 1: Estrutura de Pastas
 
 ```
-PASSO 1: Domain Layer
-  ├── 1.1 Criar modelos de domínio
-  ├── 1.2 Criar exceções de domínio
-  └── 1.3 Testar domain (unit tests puros)
+src/main/java/com/mvbr/store/
+│
+├── domain/                              ← CENTRO DO HEXÁGONO
+│   └── model/
+│       ├── payment/
+│       │   ├── Payment.java             ← Entity (PURO!)
+│       │   ├── PaymentId.java           ← Value Object
+│       │   ├── PaymentStatus.java       ← Enum
+│       │   └── Money.java               ← Value Object
+│       └── ...
+│
+├── application/                         ← USE CASES (ainda no hexágono)
+│   ├── port/
+│   │   ├── in/                          ← INBOUND PORTS
+│   │   │   └── ApprovePaymentUseCase.java
+│   │   └── out/                         ← OUTBOUND PORTS
+│   │       ├── PaymentRepository.java
+│   │       └── EventPublisher.java
+│   │
+│   ├── service/                         ← IMPLEMENTAÇÃO DOS USE CASES
+│   │   └── ApprovePaymentService.java
+│   │
+│   └── command/                         ← DTOs de entrada
+│       └── ApprovePaymentCommand.java
+│
+└── infrastructure/                      ← ADAPTERS (FORA do hexágono)
+    └── adapter/
+        ├── in/                          ← INBOUND ADAPTERS
+        │   └── rest/
+        │       ├── PaymentController.java
+        │       └── dto/
+        │           ├── ApprovePaymentRequest.java
+        │           └── PaymentResponse.java
+        │
+        └── out/                         ← OUTBOUND ADAPTERS
+            ├── persistence/
+            │   ├── JpaPaymentRepository.java
+            │   ├── entity/
+            │   │   └── PaymentEntity.java
+            │   └── mapper/
+            │       └── PaymentMapper.java
+            │
+            └── messaging/
+                └── KafkaEventPublisher.java
 
-PASSO 2: Application Layer - Ports
-  ├── 2.1 Criar Inbound Ports (use cases)
-  ├── 2.2 Criar Outbound Ports (dependências)
-  └── 2.3 Criar Commands e Responses
 
-PASSO 3: Application Layer - Services
-  ├── 3.1 Implementar Use Case Services
-  └── 3.2 Testar services (com mocks das portas)
+REGRA DE OURO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-PASSO 4: Infrastructure Layer - Adapters
-  ├── 4.1 Criar Adapter de Persistência (JPA)
-  ├── 4.2 Criar Adapter de Mensageria (Kafka)
-  ├── 4.3 Criar Adapter Web (REST)
-  └── 4.4 Configurações (Beans, Kafka, JPA)
-
-PASSO 5: Testes de Integração
-  └── 5.1 Testar fluxo completo (E2E)
+✅ domain/       → Não importa NADA de outras pastas
+✅ application/  → Só importa domain/
+✅ infrastructure/ → Pode importar domain/ e application/
 ```
 
-### Checklist Detalhado
-
-#### ✅ PASSO 1: Domain Layer
-
-```
-[ ] Criar package domain/model
-[ ] Criar PaymentDomain.java (SEM @Entity)
-    [ ] Campos final quando possível
-    [ ] Validações no construtor
-    [ ] Métodos de negócio (approve, cancel, etc)
-    [ ] Getters (NO setters públicos)
-    [ ] equals/hashCode baseado em ID
-[ ] Criar PaymentStatus.java (enum)
-[ ] Criar package domain/exception
-[ ] Criar InvalidPaymentException.java
-[ ] Criar PaymentNotFoundException.java
-[ ] Escrever testes unitários (sem Spring)
-```
-
-#### ✅ PASSO 2: Application Layer - Ports
-
-```
-[ ] Criar package application/port/in
-[ ] Criar ApprovePaymentUseCase.java (interface)
-[ ] Criar CancelPaymentUseCase.java (interface)
-[ ] Criar package application/port/out
-[ ] Criar PaymentRepositoryPort.java (interface)
-[ ] Criar PaymentEventPublisherPort.java (interface)
-[ ] Criar package application/command
-[ ] Criar ApprovePaymentCommand.java (record)
-[ ] Criar PaymentResponse.java (record)
-```
-
-#### ✅ PASSO 3: Application Layer - Services
-
-```
-[ ] Criar package application/service
-[ ] Criar ApprovePaymentService.java
-    [ ] Implementa ApprovePaymentUseCase
-    [ ] Injeta PaymentRepositoryPort
-    [ ] Injeta PaymentEventPublisherPort
-    [ ] Método approve() orquestra:
-        [ ] Criar PaymentDomain
-        [ ] Chamar payment.approve()
-        [ ] Salvar via repository port
-        [ ] Publicar via event port
-        [ ] Retornar PaymentResponse
-[ ] Anotar com @Service
-[ ] Anotar método com @Transactional
-[ ] Escrever testes (mockando portas)
-```
-
-#### ✅ PASSO 4: Infrastructure - Persistence Adapter
-
-```
-[ ] Criar package infrastructure/adapter/out/persistence
-[ ] Criar PaymentEntity.java
-    [ ] Anotar com @Entity, @Table
-    [ ] Anotar campos com @Column
-    [ ] Construtor padrão (protected)
-    [ ] Getters e Setters
-[ ] Criar PaymentPersistenceMapper.java
-    [ ] toEntity(PaymentDomain) → PaymentEntity
-    [ ] toDomain(PaymentEntity) → PaymentDomain
-[ ] Criar PaymentJpaRepository.java (extends JpaRepository)
-[ ] Criar PaymentPersistenceAdapter.java
-    [ ] Implementa PaymentRepositoryPort
-    [ ] Anotar com @Component
-    [ ] Injetar PaymentJpaRepository
-    [ ] Injetar PaymentPersistenceMapper
-    [ ] Implementar métodos (save, findById, etc)
-```
-
-#### ✅ PASSO 5: Infrastructure - Messaging Adapter
-
-```
-[ ] Criar package infrastructure/adapter/out/messaging
-[ ] Criar PaymentApprovedEvent.java (record)
-[ ] Criar PaymentEventMapper.java
-    [ ] toPaymentApprovedEvent(PaymentDomain)
-[ ] Criar PaymentEventProducer.java
-    [ ] Injetar KafkaTemplate
-    [ ] publishPaymentApproved(event)
-[ ] Criar KafkaEventPublisherAdapter.java
-    [ ] Implementa PaymentEventPublisherPort
-    [ ] Anotar com @Component
-    [ ] Injetar PaymentEventProducer
-    [ ] Injetar PaymentEventMapper
-```
-
-#### ✅ PASSO 6: Infrastructure - Web Adapter
-
-```
-[ ] Criar package infrastructure/adapter/in/web
-[ ] Criar PaymentRequestDto.java (record)
-[ ] Criar PaymentResponseDto.java (record)
-[ ] Criar PaymentWebMapper.java
-    [ ] toCommand(dto) → ApprovePaymentCommand
-    [ ] toDto(response) → PaymentResponseDto
-[ ] Criar PaymentController.java
-    [ ] Anotar com @RestController, @RequestMapping
-    [ ] Injetar ApprovePaymentUseCase
-    [ ] Injetar PaymentWebMapper
-    [ ] Endpoint POST /approve
-```
-
-#### ✅ PASSO 7: Configurações
-
-```
-[ ] application.yaml
-    [ ] Configurar Kafka
-    [ ] Configurar JPA/Postgres
-    [ ] Configurar server port
-[ ] KafkaConfig.java (se necessário)
-[ ] Migration SQL (Flyway)
-    [ ] V1__create_payment_table.sql
-```
-
----
-
-## 5. Padrões de Código
-
-### Padrão: Domain Model
+### PASSO 2: Criar Domain (Núcleo do Hexágono)
 
 ```java
-// ✅ CORRETO
-public class PaymentDomain {
-    private final String id;          // Imutável
-    private PaymentStatus status;     // Mutável (estado)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      DOMAIN - Payment.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // Validação no construtor
-    public PaymentDomain(String id, BigDecimal amount) {
-        if (amount.compareTo(ZERO) <= 0) {
-            throw new InvalidPaymentException("Amount must be positive");
-        }
-        this.id = id;
-        this.status = PENDING;
+package com.mvbr.store.domain.model.payment;
+
+import java.time.Instant;
+
+/**
+ * Payment - DOMAIN ENTITY (PURO!).
+ *
+ * ✅ ZERO dependências de frameworks!
+ * ✅ ZERO anotações (@Entity, @Table, @Column)!
+ * ✅ ZERO conhecimento de infraestrutura!
+ * ✅ SÓ regras de negócio PURAS!
+ */
+public class Payment {
+
+    private final PaymentId paymentId;
+    private final CustomerId customerId;
+    private final Money amount;
+    private PaymentStatus status;
+    private final Instant createdAt;
+
+    /**
+     * Construtor com validações.
+     */
+    public Payment(PaymentId paymentId, CustomerId customerId, Money amount) {
+        validatePaymentId(paymentId);
+        validateCustomerId(customerId);
+        validateAmount(amount);
+
+        this.paymentId = paymentId;
+        this.customerId = customerId;
+        this.amount = amount;
+        this.status = PaymentStatus.PENDING;
+        this.createdAt = Instant.now();
     }
 
-    // Lógica de negócio
+    /**
+     * ✅ Comportamento (regra de negócio).
+     */
     public void approve() {
-        if (status == CANCELED) {
-            throw new IllegalStateException("Cannot approve canceled payment");
+        if (status == PaymentStatus.CANCELLED) {
+            throw new PaymentAlreadyCancelledException(
+                "Cannot approve cancelled payment: " + paymentId
+            );
         }
-        this.status = APPROVED;
+
+        if (status == PaymentStatus.APPROVED) {
+            throw new PaymentAlreadyApprovedException(
+                "Payment already approved: " + paymentId
+            );
+        }
+
+        this.status = PaymentStatus.APPROVED;
     }
+
+    /**
+     * ✅ Validações (regras de domínio).
+     */
+    private void validatePaymentId(PaymentId paymentId) {
+        if (paymentId == null) {
+            throw new IllegalArgumentException("PaymentId cannot be null");
+        }
+    }
+
+    private void validateCustomerId(CustomerId customerId) {
+        if (customerId == null) {
+            throw new IllegalArgumentException("CustomerId cannot be null");
+        }
+    }
+
+    private void validateAmount(Money amount) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+
+        if (amount.isNegativeOrZero()) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+    }
+
+    // Getters (SEM setters!)
+    public PaymentId getPaymentId() { return paymentId; }
+    public CustomerId getCustomerId() { return customerId; }
+    public Money getAmount() { return amount; }
+    public PaymentStatus getStatus() { return status; }
+    public Instant getCreatedAt() { return createdAt; }
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      DOMAIN - Money.java (Value Object)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.domain.model.payment;
+
+import java.math.BigDecimal;
+import java.util.Currency;
+import java.util.Objects;
+
+/**
+ * Money - VALUE OBJECT (PURO!).
+ */
+public class Money {
+
+    private final BigDecimal amount;
+    private final Currency currency;
+
+    public Money(BigDecimal amount, Currency currency) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        if (currency == null) {
+            throw new IllegalArgumentException("Currency cannot be null");
+        }
+
+        this.amount = amount;
+        this.currency = currency;
+    }
+
+    public boolean isNegativeOrZero() {
+        return amount.compareTo(BigDecimal.ZERO) <= 0;
+    }
+
+    public Money add(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new CurrencyMismatchException();
+        }
+        return new Money(this.amount.add(other.amount), this.currency);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Money money = (Money) obj;
+        return amount.compareTo(money.amount) == 0 &&
+               currency.equals(money.currency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(amount, currency);
+    }
+
+    public BigDecimal getAmount() { return amount; }
+    public Currency getCurrency() { return currency; }
 }
 ```
 
+### PASSO 3: Criar Ports (Interfaces)
+
 ```java
-// ❌ ERRADO
-@Entity  // NÃO usar @Entity no domain!
-public class PaymentDomain {
-    private String id;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      INBOUND PORT - ApprovePaymentUseCase.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    public void setId(String id) {  // NÃO expor setters!
-        this.id = id;
-    }
+package com.mvbr.store.application.port.in;
 
-    // Sem validações!
+/**
+ * ApprovePaymentUseCase - INBOUND PORT.
+ *
+ * Interface que define O QUE o hexágono FAZ.
+ * (Quem CHAMA o hexágono)
+ *
+ * ✅ Vocabulário do DOMÍNIO (não técnico)!
+ * ✅ Independente de tecnologia (REST, gRPC, etc)!
+ */
+public interface ApprovePaymentUseCase {
+
+    /**
+     * Aprovar um pagamento.
+     *
+     * @param command dados do comando
+     * @return Payment aprovado
+     */
+    Payment execute(ApprovePaymentCommand command);
 }
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      OUTBOUND PORT - PaymentRepository.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.application.port.out;
+
+import com.mvbr.store.domain.model.payment.Payment;
+import com.mvbr.store.domain.model.payment.PaymentId;
+import java.util.Optional;
+
+/**
+ * PaymentRepository - OUTBOUND PORT.
+ *
+ * Interface que define O QUE o hexágono PRECISA.
+ * (O que o hexágono CHAMA)
+ *
+ * ✅ Definida pelo HEXÁGONO (Application Layer)!
+ * ✅ Vocabulário do DOMÍNIO (save, não persist)!
+ * ✅ Retorna Domain Models (Payment, não PaymentEntity)!
+ */
+public interface PaymentRepository {
+
+    /**
+     * Salvar payment.
+     */
+    Payment save(Payment payment);
+
+    /**
+     * Buscar por ID.
+     */
+    Optional<Payment> findById(PaymentId paymentId);
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      COMMAND - ApprovePaymentCommand.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.application.command;
+
+import com.mvbr.store.domain.model.payment.PaymentId;
+import com.mvbr.store.domain.model.payment.CustomerId;
+import com.mvbr.store.domain.model.payment.Money;
+
+/**
+ * ApprovePaymentCommand - DTO de entrada (CQRS).
+ *
+ * Representa a INTENÇÃO de aprovar um pagamento.
+ */
+public record ApprovePaymentCommand(
+    PaymentId paymentId,
+    CustomerId customerId,
+    Money amount
+) {}
 ```
 
-### Padrão: Use Case Service
+### PASSO 4: Implementar Use Case (Application Layer)
 
 ```java
-// ✅ CORRETO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      USE CASE SERVICE - ApprovePaymentService.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.application.service;
+
+import com.mvbr.store.application.port.in.ApprovePaymentUseCase;
+import com.mvbr.store.application.port.out.PaymentRepository;
+import com.mvbr.store.application.command.ApprovePaymentCommand;
+import com.mvbr.store.domain.model.payment.Payment;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * ApprovePaymentService - IMPLEMENTAÇÃO do Use Case.
+ *
+ * ✅ Implementa Inbound Port (ApprovePaymentUseCase)
+ * ✅ Usa Outbound Ports (PaymentRepository)
+ * ✅ Orquestra lógica de aplicação
+ * ✅ NÃO conhece Adapters (só Ports)!
+ */
 @Service
 public class ApprovePaymentService implements ApprovePaymentUseCase {
 
-    private final PaymentRepositoryPort repository;  // Porta (interface)
+    private final PaymentRepository paymentRepository;  // ← Outbound Port!
 
+    public ApprovePaymentService(PaymentRepository paymentRepository) {
+        this.paymentRepository = paymentRepository;
+    }
+
+    @Override
     @Transactional
-    public PaymentResponse approve(ApprovePaymentCommand cmd) {
-        PaymentDomain payment = new PaymentDomain(...);
-        payment.approve();  // Lógica NO DOMAIN
-        return repository.save(payment);
-    }
-}
-```
+    public Payment execute(ApprovePaymentCommand command) {
 
-```java
-// ❌ ERRADO
-@Service
-public class ApprovePaymentService {
-
-    private final PaymentJpaRepository jpaRepo;  // Implementação concreta!
-
-    public PaymentResponse approve(ApprovePaymentCommand cmd) {
-        PaymentDomain payment = new PaymentDomain(...);
-
-        // Lógica NO SERVICE (errado!)
-        if (payment.getStatus() == CANCELED) {
-            throw new IllegalStateException("...");
-        }
-        payment.setStatus(APPROVED);  // Setter público (errado!)
-    }
-}
-```
-
-### Padrão: Adapter
-
-```java
-// ✅ CORRETO
-@Component
-public class PaymentPersistenceAdapter implements PaymentRepositoryPort {
-
-    private final PaymentJpaRepository jpaRepo;
-    private final PaymentPersistenceMapper mapper;
-
-    public PaymentDomain save(PaymentDomain domain) {
-        PaymentEntity entity = mapper.toEntity(domain);
-        PaymentEntity saved = jpaRepo.save(entity);
-        return mapper.toDomain(saved);
-    }
-}
-```
-
-### Padrão: Mapper
-
-```java
-// ✅ CORRETO
-@Component
-public class PaymentPersistenceMapper {
-
-    // Domain → Entity (salvar)
-    public PaymentEntity toEntity(PaymentDomain domain) {
-        return new PaymentEntity(
-            domain.getId(),
-            domain.getAmount(),
-            domain.getStatus()
-        );
-    }
-
-    // Entity → Domain (carregar)
-    public PaymentDomain toDomain(PaymentEntity entity) {
-        return new PaymentDomain(
-            entity.getId(),
-            entity.getAmount(),
-            entity.getStatus(),
-            entity.getCreatedAt()  // Construtor de restauração
-        );
-    }
-}
-```
-
----
-
-## 6. Testes na Prática
-
-### Teste de Domain (PURO - sem Spring)
-
-```java
-package com.empresa.projeto.domain.model;
-
-import org.junit.jupiter.api.Test;
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-/**
- * Testes do PaymentDomain.
- *
- * SEM @SpringBootTest!
- * SEM banco!
- * SEM Kafka!
- *
- * Roda em MILISSEGUNDOS!
- */
-class PaymentDomainTest {
-
-    @Test
-    void shouldCreatePaymentWithPendingStatus() {
-        // Arrange & Act
-        PaymentDomain payment = new PaymentDomain(
-            "pay-123",
-            "user-456",
-            new BigDecimal("100.00"),
-            "BRL"
+        // 1. Criar Domain Model (validações executam aqui!)
+        Payment payment = new Payment(
+            command.paymentId(),
+            command.customerId(),
+            command.amount()
         );
 
-        // Assert
-        assertEquals("pay-123", payment.getPaymentId());
-        assertEquals(PaymentStatus.PENDING, payment.getStatus());
-        assertTrue(payment.isPending());
-    }
-
-    @Test
-    void shouldApprovePayment() {
-        // Arrange
-        PaymentDomain payment = new PaymentDomain(
-            "pay-123", "user-456", new BigDecimal("100.00"), "BRL"
-        );
-
-        // Act
+        // 2. Executar lógica de negócio (Domain)
         payment.approve();
 
-        // Assert
-        assertEquals(PaymentStatus.APPROVED, payment.getStatus());
-        assertTrue(payment.isApproved());
-    }
+        // 3. Persistir usando Port (não sabe se é JPA, Mongo, etc!)
+        Payment saved = paymentRepository.save(payment);
 
-    @Test
-    void shouldNotApproveCanceledPayment() {
-        // Arrange
-        PaymentDomain payment = new PaymentDomain(
-            "pay-123", "user-456", new BigDecimal("100.00"), "BRL"
-        );
-        payment.cancel();
-
-        // Act & Assert
-        assertThrows(IllegalStateException.class, () -> {
-            payment.approve();
-        });
-    }
-
-    @Test
-    void shouldThrowExceptionWhenAmountIsZero() {
-        // Act & Assert
-        assertThrows(InvalidPaymentException.class, () -> {
-            new PaymentDomain(
-                "pay-123",
-                "user-456",
-                BigDecimal.ZERO,  // Inválido!
-                "BRL"
-            );
-        });
-    }
-
-    @Test
-    void shouldThrowExceptionWhenPaymentIdIsBlank() {
-        // Act & Assert
-        assertThrows(InvalidPaymentException.class, () -> {
-            new PaymentDomain(
-                "",  // Inválido!
-                "user-456",
-                new BigDecimal("100.00"),
-                "BRL"
-            );
-        });
+        return saved;
     }
 }
 ```
 
-### Teste de Use Case (com Mocks)
+### PASSO 5: Implementar Adapters (Infrastructure)
 
 ```java
-package com.empresa.projeto.application.service;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      INBOUND ADAPTER - PaymentController.java (REST)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import com.empresa.projeto.application.command.ApprovePaymentCommand;
-import com.empresa.projeto.application.command.PaymentResponse;
-import com.empresa.projeto.application.port.out.PaymentEventPublisherPort;
-import com.empresa.projeto.application.port.out.PaymentRepositoryPort;
-import com.empresa.projeto.domain.model.PaymentDomain;
-import com.empresa.projeto.domain.model.PaymentStatus;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+package com.mvbr.store.infrastructure.adapter.in.rest;
 
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-/**
- * Testes do ApprovePaymentService.
- *
- * USA @ExtendWith(MockitoExtension) - SEM @SpringBootTest!
- * Mocka as PORTAS (interfaces).
- * Roda RÁPIDO!
- */
-@ExtendWith(MockitoExtension.class)
-class ApprovePaymentServiceTest {
-
-    @Mock
-    private PaymentRepositoryPort paymentRepository;
-
-    @Mock
-    private PaymentEventPublisherPort eventPublisher;
-
-    @InjectMocks
-    private ApprovePaymentService service;
-
-    @Test
-    void shouldApprovePaymentSuccessfully() {
-        // Arrange
-        ApprovePaymentCommand command = new ApprovePaymentCommand(
-            "pay-123",
-            "user-456",
-            new BigDecimal("100.00"),
-            "BRL"
-        );
-
-        PaymentDomain savedPayment = new PaymentDomain(
-            command.paymentId(),
-            command.userId(),
-            command.amount(),
-            command.currency(),
-            PaymentStatus.APPROVED,
-            Instant.now(),
-            Instant.now()
-        );
-
-        when(paymentRepository.save(any(PaymentDomain.class)))
-            .thenReturn(savedPayment);
-
-        // Act
-        PaymentResponse response = service.approve(command);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals("pay-123", response.paymentId());
-        assertEquals(PaymentStatus.APPROVED, response.status());
-
-        // Verify interactions
-        verify(paymentRepository, times(1)).save(any(PaymentDomain.class));
-        verify(eventPublisher, times(1)).publishPaymentApproved(any(PaymentDomain.class));
-    }
-}
-```
-
-### Teste de Integração (E2E)
-
-```java
-package com.empresa.projeto;
-
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentRequestDto;
-import com.empresa.projeto.infrastructure.adapter.in.web.dto.PaymentResponseDto;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
+import com.mvbr.store.application.port.in.ApprovePaymentUseCase;  // ← Port!
+import com.mvbr.store.application.command.ApprovePaymentCommand;
+import com.mvbr.store.domain.model.payment.*;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * Teste de Integração - Fluxo Completo.
+ * PaymentController - INBOUND ADAPTER (REST API).
  *
- * USA @SpringBootTest - Sobe contexto completo.
- * Testa HTTP → Controller → Use Case → Adapter → Banco.
+ * ✅ ADAPTA HTTP para Use Case!
+ * ✅ Depende de Port (ApprovePaymentUseCase), não de Service!
+ * ✅ Conhece tecnologia REST (mas hexágono não!)
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-class PaymentIntegrationTest {
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    private final ApprovePaymentUseCase approvePaymentUseCase;  // ← Port!
 
-    @Test
-    void shouldApprovePaymentEndToEnd() {
-        // Arrange
-        PaymentRequestDto request = new PaymentRequestDto(
-            "pay-" + System.currentTimeMillis(),
-            "user-456",
-            new BigDecimal("100.00"),
-            "BRL"
+    public PaymentController(ApprovePaymentUseCase approvePaymentUseCase) {
+        this.approvePaymentUseCase = approvePaymentUseCase;
+    }
+
+    @PostMapping("/approve")
+    public ResponseEntity<PaymentResponse> approvePayment(
+            @RequestBody ApprovePaymentRequest request) {
+
+        // 1. Adaptar Request → Command
+        ApprovePaymentCommand command = new ApprovePaymentCommand(
+            new PaymentId(request.paymentId()),
+            new CustomerId(request.customerId()),
+            new Money(request.amount(), request.currency())
         );
 
-        // Act
-        ResponseEntity<PaymentResponseDto> response = restTemplate.postForEntity(
-            "/api/v1/payments/approve",
-            request,
-            PaymentResponseDto.class
+        // 2. Chamar Use Case (através do Port!)
+        Payment payment = approvePaymentUseCase.execute(command);
+
+        // 3. Adaptar Payment → Response
+        PaymentResponse response = PaymentResponse.from(payment);
+
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      OUTBOUND ADAPTER - JpaPaymentRepository.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.infrastructure.adapter.out.persistence;
+
+import com.mvbr.store.application.port.out.PaymentRepository;  // ← Port!
+import com.mvbr.store.domain.model.payment.Payment;
+import com.mvbr.store.domain.model.payment.PaymentId;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+/**
+ * JpaPaymentRepository - OUTBOUND ADAPTER (JPA).
+ *
+ * ✅ IMPLEMENTA Outbound Port (PaymentRepository)!
+ * ✅ ADAPTA Port para JPA/PostgreSQL!
+ * ✅ Conhece tecnologia JPA (mas hexágono não!)
+ */
+@Repository
+public class JpaPaymentRepository implements PaymentRepository {  // ← Implementa Port!
+
+    private final PaymentJpaRepository jpaRepository;  // Spring Data JPA
+    private final PaymentMapper mapper;
+
+    public JpaPaymentRepository(PaymentJpaRepository jpaRepository,
+                               PaymentMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
+
+    @Override
+    public Payment save(Payment payment) {
+        // Adaptar Domain → Entity (JPA)
+        PaymentEntity entity = mapper.toEntity(payment);
+
+        // Salvar usando Spring Data JPA
+        PaymentEntity saved = jpaRepository.save(entity);
+
+        // Adaptar Entity → Domain
+        return mapper.toDomain(saved);
+    }
+
+    @Override
+    public Optional<Payment> findById(PaymentId paymentId) {
+        return jpaRepository.findById(paymentId.getValue())
+            .map(mapper::toDomain);
+    }
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      JPA ENTITY - PaymentEntity.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.infrastructure.adapter.out.persistence.entity;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.Instant;
+
+/**
+ * PaymentEntity - JPA Entity (INFRASTRUCTURE).
+ *
+ * ❌ Domain NÃO conhece esta classe!
+ * ✅ Detalhe de implementação do Adapter!
+ */
+@Entity
+@Table(name = "payment")
+public class PaymentEntity {
+
+    @Id
+    @Column(name = "payment_id")
+    private String paymentId;
+
+    @Column(name = "customer_id")
+    private String customerId;
+
+    @Column(name = "amount")
+    private BigDecimal amount;
+
+    @Column(name = "currency")
+    private String currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    // Construtores, getters, setters...
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//      MAPPER - PaymentMapper.java
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+package com.mvbr.store.infrastructure.adapter.out.persistence.mapper;
+
+import com.mvbr.store.domain.model.payment.*;
+import com.mvbr.store.infrastructure.adapter.out.persistence.entity.PaymentEntity;
+import org.springframework.stereotype.Component;
+import java.util.Currency;
+
+/**
+ * PaymentMapper - Converte Domain ↔ Entity.
+ */
+@Component
+public class PaymentMapper {
+
+    /**
+     * Domain → Entity (para persistir).
+     */
+    public PaymentEntity toEntity(Payment payment) {
+        PaymentEntity entity = new PaymentEntity();
+        entity.setPaymentId(payment.getPaymentId().getValue());
+        entity.setCustomerId(payment.getCustomerId().getValue());
+        entity.setAmount(payment.getAmount().getAmount());
+        entity.setCurrency(payment.getAmount().getCurrency().getCurrencyCode());
+        entity.setStatus(payment.getStatus().name());
+        entity.setCreatedAt(payment.getCreatedAt());
+        return entity;
+    }
+
+    /**
+     * Entity → Domain (ao buscar).
+     */
+    public Payment toDomain(PaymentEntity entity) {
+        PaymentId paymentId = new PaymentId(entity.getPaymentId());
+        CustomerId customerId = new CustomerId(entity.getCustomerId());
+        Money amount = new Money(
+            entity.getAmount(),
+            Currency.getInstance(entity.getCurrency())
         );
 
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("APPROVED", response.getBody().status());
-        assertEquals(request.paymentId(), response.getBody().paymentId());
+        Payment payment = new Payment(paymentId, customerId, amount);
+
+        // Restaurar estado
+        if ("APPROVED".equals(entity.getStatus())) {
+            payment.approve();
+        }
+
+        return payment;
     }
 }
 ```
 
 ---
 
-## 7. Casos de Uso Reais
+## 5. Inbound vs Outbound
 
-### Caso 1: Trocar Banco de Dados (JPA → MongoDB)
+### Inbound Ports & Adapters (Quem USA o hexágono)
 
-**Problema:** Precisamos migrar de PostgreSQL (JPA) para MongoDB.
+```
+INBOUND (ENTRADA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Solução com Hexagonal:**
+QUEM CHAMA O HEXÁGONO?
+  • REST API (Controller)
+  • GraphQL (Resolver)
+  • gRPC (Service)
+  • CLI (Command Line)
+  • Message Consumer (Kafka Consumer)
+  • Scheduled Job (Cron)
 
-1. **Criar Adapter MongoDB** (implementa a MESMA porta)
+
+FLUXO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. INBOUND ADAPTER recebe requisição externa
+   └─ Exemplo: PaymentController recebe HTTP POST
+
+2. ADAPTER converte para linguagem do DOMÍNIO
+   └─ Exemplo: ApprovePaymentRequest → ApprovePaymentCommand
+
+3. ADAPTER chama INBOUND PORT (Use Case)
+   └─ Exemplo: approvePaymentUseCase.execute(command)
+
+4. USE CASE executa lógica de negócio
+   └─ Exemplo: payment.approve()
+
+5. ADAPTER converte resposta para formato externo
+   └─ Exemplo: Payment → PaymentResponse (JSON)
+
+
+EXEMPLO COMPLETO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ┌─────────────────────┐
+   │   HTTP Request      │  ← Cliente
+   └──────────┬──────────┘
+              │
+              ↓
+   ┌──────────────────────┐
+   │   REST Controller    │  ← Inbound Adapter
+   │   (Infrastructure)   │
+   └──────────┬───────────┘
+              │ 1. Converte Request → Command
+              │
+              ↓
+   ┌──────────────────────┐
+   │   Use Case Port      │  ← Inbound Port (Interface)
+   │   (Application)      │
+   └──────────┬───────────┘
+              │ 2. Executa
+              ↓
+   ┌──────────────────────┐
+   │   Use Case Service   │  ← Implementação (Application)
+   │   (Application)      │
+   └──────────┬───────────┘
+              │ 3. Chama Domain
+              ↓
+   ┌──────────────────────┐
+   │   Domain Model       │  ← Regras de negócio
+   │   (Domain)           │
+   └──────────────────────┘
+
+
+MÚLTIPLOS INBOUND ADAPTERS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  REST API Adapter ──┐
+                     │
+  GraphQL Adapter ───┼──→ ApprovePaymentUseCase → Domain
+                     │
+  gRPC Adapter ──────┘
+
+✅ MESMA lógica de negócio (Use Case)!
+✅ DIFERENTES formas de entrada (Adapters)!
+```
+
+### Outbound Ports & Adapters (O que o hexágono PRECISA)
+
+```
+OUTBOUND (SAÍDA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+O QUE O HEXÁGONO PRECISA?
+  • Persistência (Database)
+  • Mensageria (Kafka, RabbitMQ)
+  • Cache (Redis)
+  • APIs externas (Payment Gateway, Email Service)
+  • Sistema de arquivos
+
+
+FLUXO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. USE CASE precisa de algo externo
+   └─ Exemplo: Precisa salvar Payment
+
+2. USE CASE chama OUTBOUND PORT
+   └─ Exemplo: paymentRepository.save(payment)
+
+3. OUTBOUND ADAPTER implementa PORT
+   └─ Exemplo: JpaPaymentRepository
+
+4. ADAPTER converte Domain → Tecnologia
+   └─ Exemplo: Payment → PaymentEntity
+
+5. ADAPTER executa operação tecnológica
+   └─ Exemplo: jpaRepository.save(entity)
+
+6. ADAPTER converte Tecnologia → Domain
+   └─ Exemplo: PaymentEntity → Payment
+
+
+EXEMPLO COMPLETO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ┌──────────────────────┐
+   │   Use Case Service   │  ← Application
+   │   (Application)      │
+   └──────────┬───────────┘
+              │ 1. Chama Port
+              ↓
+   ┌──────────────────────┐
+   │   Repository Port    │  ← Outbound Port (Interface)
+   │   (Application)      │
+   └──────────┬───────────┘
+              │ 2. Implementado por
+              ↓
+   ┌──────────────────────┐
+   │   JPA Adapter        │  ← Outbound Adapter
+   │   (Infrastructure)   │
+   └──────────┬───────────┘
+              │ 3. Converte Domain → Entity
+              │
+              ↓
+   ┌──────────────────────┐
+   │   Spring Data JPA    │  ← Tecnologia
+   └──────────┬───────────┘
+              │
+              ↓
+   ┌──────────────────────┐
+   │   PostgreSQL         │  ← Banco de dados
+   └──────────────────────┘
+
+
+MÚLTIPLOS OUTBOUND ADAPTERS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  PaymentRepository (Port)
+         ↑
+         │ implementado por
+         │
+    ┌────┴────┬────────┬─────────┐
+    │         │        │         │
+  JPA     MongoDB   Redis   InMemory
+ Adapter   Adapter  Adapter  Adapter
+    │         │        │         │
+    ↓         ↓        ↓         ↓
+PostgreSQL  Mongo    Redis    HashMap
+                              (testes!)
+
+✅ MESMA interface (Port)!
+✅ DIFERENTES implementações (Adapters)!
+✅ Troca fácil (configuração Spring)!
+```
+
+---
+
+## 6. Testes com Hexagonal
+
+### Vantagem: Testar SEM Infraestrutura
 
 ```java
-@Component
-@ConditionalOnProperty(name = "db.type", havingValue = "mongo")
-public class PaymentMongoAdapter implements PaymentRepositoryPort {
+/**
+ * Teste de DOMAIN (sem nenhuma dependência).
+ *
+ * ✅ ZERO Spring
+ * ✅ ZERO banco de dados
+ * ✅ ZERO Kafka
+ * ✅ POJO puro!
+ * ✅ Roda em MILISSEGUNDOS!
+ */
+class PaymentTest {
 
-    private final PaymentMongoRepository mongoRepo;
-    private final PaymentMongoMapper mapper;
+    @Test
+    @DisplayName("Should approve payment when status is PENDING")
+    void shouldApprovePaymentWhenStatusIsPending() {
+        // Given
+        PaymentId paymentId = new PaymentId("pay-123");
+        CustomerId customerId = new CustomerId("cust-456");
+        Money amount = new Money(new BigDecimal("100.00"), Currency.USD);
+
+        Payment payment = new Payment(paymentId, customerId, amount);
+
+        // When
+        payment.approve();
+
+        // Then
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("Should not approve cancelled payment")
+    void shouldNotApproveCancelledPayment() {
+        // Given
+        Payment payment = new Payment(...);
+        payment.cancel();
+
+        // When/Then
+        assertThatThrownBy(() -> payment.approve())
+            .isInstanceOf(PaymentAlreadyCancelledException.class);
+    }
+}
+
+
+/**
+ * Teste de USE CASE (com Fake Adapter).
+ *
+ * ✅ Testa lógica de aplicação
+ * ✅ Usa Fake Repository (in-memory)
+ * ✅ SEM banco real!
+ * ✅ Roda RÁPIDO!
+ */
+class ApprovePaymentServiceTest {
+
+    private PaymentRepository paymentRepository;  // ← Port!
+    private ApprovePaymentService service;
+
+    @BeforeEach
+    void setUp() {
+        // ✅ Fake Adapter (implementa Port!)
+        paymentRepository = new FakePaymentRepository();
+        service = new ApprovePaymentService(paymentRepository);
+    }
+
+    @Test
+    @DisplayName("Should save payment after approval")
+    void shouldSavePaymentAfterApproval() {
+        // Given
+        ApprovePaymentCommand command = new ApprovePaymentCommand(...);
+
+        // When
+        Payment approved = service.execute(command);
+
+        // Then
+        assertThat(approved.getStatus()).isEqualTo(PaymentStatus.APPROVED);
+
+        // Verificar que foi salvo (Fake Repository)
+        Payment saved = paymentRepository.findById(approved.getPaymentId()).get();
+        assertThat(saved).isNotNull();
+    }
+}
+
+
+/**
+ * Fake Repository (para testes).
+ *
+ * ✅ Implementa Port!
+ * ✅ In-memory (HashMap)!
+ * ✅ Zero dependências!
+ */
+class FakePaymentRepository implements PaymentRepository {
+
+    private final Map<PaymentId, Payment> storage = new HashMap<>();
 
     @Override
-    public PaymentDomain save(PaymentDomain payment) {
-        PaymentDocument doc = mapper.toDocument(payment);
-        PaymentDocument saved = mongoRepo.save(doc);
-        return mapper.toDomain(saved);
+    public Payment save(Payment payment) {
+        storage.put(payment.getPaymentId(), payment);
+        return payment;
+    }
+
+    @Override
+    public Optional<Payment> findById(PaymentId paymentId) {
+        return Optional.ofNullable(storage.get(paymentId));
+    }
+}
+
+
+/**
+ * Teste de ADAPTER (integração real).
+ *
+ * ✅ Testa JpaPaymentRepository
+ * ✅ Usa banco REAL (H2 in-memory)
+ * ✅ Mais lento (mas necessário!)
+ */
+@DataJpaTest
+class JpaPaymentRepositoryTest {
+
+    @Autowired
+    private PaymentJpaRepository jpaRepository;
+
+    private PaymentMapper mapper = new PaymentMapper();
+    private JpaPaymentRepository repository;
+
+    @BeforeEach
+    void setUp() {
+        repository = new JpaPaymentRepository(jpaRepository, mapper);
+    }
+
+    @Test
+    @DisplayName("Should save and retrieve payment")
+    void shouldSaveAndRetrievePayment() {
+        // Given
+        Payment payment = new Payment(...);
+
+        // When
+        Payment saved = repository.save(payment);
+
+        // Then
+        Optional<Payment> found = repository.findById(saved.getPaymentId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getPaymentId()).isEqualTo(saved.getPaymentId());
     }
 }
 ```
 
-2. **Configurar application.yaml**
+---
 
-```yaml
-# Para JPA
-db:
-  type: jpa
+## 7. Hexagonal no Dia a Dia
 
-# Para MongoDB
-db:
-  type: mongo
+### Situação 1: Trocar Banco de Dados
+
 ```
+CENÁRIO: Migrar PostgreSQL → MongoDB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-3. **PRONTO!** Domain e Use Cases NÃO mudam!
+❌ SEM HEXAGONAL:
+   1. Mudar Repository (SQL → Mongo) ✏️
+   2. Mudar Service (conhece JPA!) ✏️
+   3. Mudar Domain (tem @Entity!) ✏️
+   4. Atualizar testes (quebram!) ✏️
+   5. Rezar 🙏
+   RESULTADO: 3-4 camadas mudaram! 💥
 
-### Caso 2: Adicionar gRPC (além de REST)
 
-**Problema:** Clientes querem gRPC além de REST.
+✅ COM HEXAGONAL:
+   1. Criar MongoPaymentRepository (implementa Port) ✏️
+   2. Atualizar Spring config (injetar novo Adapter) ✏️
+   3. FIM! ✅
+   RESULTADO: Domain + Application = INTOCADOS! 🎉
 
-**Solução com Hexagonal:**
 
-1. **Criar Adapter gRPC**
+PASSO A PASSO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-```java
-@GrpcService
-public class PaymentGrpcAdapter extends PaymentServiceGrpc.PaymentServiceImplBase {
+// 1. Criar Mongo Adapter (NOVO arquivo!)
+@Repository
+public class MongoPaymentRepository implements PaymentRepository {
 
-    private final ApprovePaymentUseCase approveUseCase;
-    private final PaymentGrpcMapper mapper;
+    private final MongoTemplate mongoTemplate;
 
     @Override
-    public void approvePayment(ApprovePaymentRequest request,
-                               StreamObserver<PaymentResponse> responseObserver) {
+    public Payment save(Payment payment) {
+        PaymentDocument doc = toDocument(payment);
+        mongoTemplate.save(doc);
+        return payment;
+    }
 
-        ApprovePaymentCommand command = mapper.toCommand(request);
-        PaymentResponse response = approveUseCase.approve(command);
-        PaymentProto proto = mapper.toProto(response);
+    @Override
+    public Optional<Payment> findById(PaymentId paymentId) {
+        PaymentDocument doc = mongoTemplate.findById(
+            paymentId.getValue(),
+            PaymentDocument.class
+        );
+        return Optional.ofNullable(doc).map(this::toDomain);
+    }
+}
 
-        responseObserver.onNext(proto);
+// 2. Configurar Spring (application.yml)
+spring:
+  profiles:
+    active: mongo  # ← Muda aqui!
+
+// 3. Configuration (Spring decide qual injetar)
+@Configuration
+public class RepositoryConfig {
+
+    @Bean
+    @Profile("postgres")
+    public PaymentRepository jpaRepository(
+            PaymentJpaRepository jpaRepo,
+            PaymentMapper mapper) {
+        return new JpaPaymentRepository(jpaRepo, mapper);
+    }
+
+    @Bean
+    @Profile("mongo")
+    public PaymentRepository mongoRepository(MongoTemplate mongo) {
+        return new MongoPaymentRepository(mongo);
+    }
+}
+
+// ✅ Domain NÃO mudou!
+// ✅ Application NÃO mudou!
+// ✅ Use Case NÃO mudou!
+// ✅ APENAS Adapter mudou!
+```
+
+### Situação 2: Adicionar Nova Interface (gRPC)
+
+```
+CENÁRIO: Adicionar gRPC mantendo REST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ COM HEXAGONAL:
+   1. Criar gRPC Adapter (NOVO arquivo!) ✏️
+   2. FIM! ✅
+   RESULTADO: Use Case reutilizado! 🎉
+
+
+// 1. Criar gRPC Adapter
+@GrpcService
+public class PaymentGrpcService
+        extends PaymentServiceGrpc.PaymentServiceImplBase {
+
+    private final ApprovePaymentUseCase useCase;  // ← MESMO Use Case!
+
+    @Override
+    public void approvePayment(
+            ApprovePaymentRequest request,
+            StreamObserver<PaymentResponse> responseObserver) {
+
+        // Adaptar gRPC → Command
+        ApprovePaymentCommand command = new ApprovePaymentCommand(...);
+
+        // ✅ Chamar MESMO Use Case que REST usa!
+        Payment payment = useCase.execute(command);
+
+        // Adaptar Payment → gRPC Response
+        PaymentResponse response = toGrpcResponse(payment);
+
+        responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 }
+
+// ✅ Use Case reutilizado (REST + gRPC)!
+// ✅ Domain reutilizado!
+// ✅ ZERO duplicação!
 ```
 
-2. **REST e gRPC funcionam juntos!** Use Case é o mesmo!
+### Situação 3: Testar SEM Infraestrutura
 
-### Caso 3: Testes A/B (Kafka vs RabbitMQ)
-
-**Problema:** Testar performance Kafka vs RabbitMQ.
-
-**Solução:**
-
-```java
-// Adapter Kafka
-@Component
-@ConditionalOnProperty(name = "messaging.type", havingValue = "kafka")
-public class KafkaEventPublisherAdapter implements PaymentEventPublisherPort {
-    // Implementação Kafka
-}
-
-// Adapter RabbitMQ
-@Component
-@ConditionalOnProperty(name = "messaging.type", havingValue = "rabbitmq")
-public class RabbitMqEventPublisherAdapter implements PaymentEventPublisherPort {
-    // Implementação RabbitMQ
-}
 ```
+CENÁRIO: Testar lógica de negócio rapidamente
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Trocar em runtime:**
+✅ COM HEXAGONAL:
 
-```yaml
-messaging:
-  type: kafka  # ou rabbitmq
+// 1. Criar Fake Adapter (in-memory)
+class FakePaymentRepository implements PaymentRepository {
+    private Map<PaymentId, Payment> storage = new HashMap<>();
+
+    @Override
+    public Payment save(Payment payment) {
+        storage.put(payment.getPaymentId(), payment);
+        return payment;
+    }
+}
+
+// 2. Testar Use Case SEM banco real
+@Test
+void shouldApprovePayment() {
+    // ✅ Fake Adapter (ZERO banco de dados!)
+    PaymentRepository repo = new FakePaymentRepository();
+    ApprovePaymentService service = new ApprovePaymentService(repo);
+
+    // Test...
+    Payment approved = service.execute(command);
+
+    assertThat(approved.getStatus()).isEqualTo(PaymentStatus.APPROVED);
+}
+
+// ✅ Teste roda em MILISSEGUNDOS!
+// ✅ CI/CD rápido!
+// ✅ Feedback imediato!
 ```
 
 ---
 
-## 8. Checklist de Implementação
+## 8. Armadilhas Comuns
 
-### ✅ Checklist Final - Antes de Produção
+### ❌ Armadilha 1: Domain Conhece Adapter
+
+```java
+// ❌ ERRADO - Domain importa Infrastructure
+
+package com.mvbr.store.domain.model.payment;
+
+import com.mvbr.store.infrastructure.adapter.out.persistence.entity.PaymentEntity;  // ❌ ERRO!
+
+public class Payment {
+    // ❌ Domain conhece JPA Entity!
+    public PaymentEntity toEntity() {
+        return new PaymentEntity(...);
+    }
+}
+
+POR QUE ESTÁ ERRADO?
+├─ Domain agora depende de Infrastructure!
+├─ Trocar JPA por Mongo = quebra Domain!
+└─ Violação da Dependency Rule!
+
+
+// ✅ CORRETO - Adapter converte Domain
+
+package com.mvbr.store.infrastructure.adapter.out.persistence.mapper;
+
+public class PaymentMapper {
+    // ✅ ADAPTER converte (não Domain!)
+    public PaymentEntity toEntity(Payment payment) {
+        PaymentEntity entity = new PaymentEntity();
+        entity.setPaymentId(payment.getPaymentId().getValue());
+        // ...
+        return entity;
+    }
+}
+```
+
+### ❌ Armadilha 2: Use Case Conhece Adapter Concreto
+
+```java
+// ❌ ERRADO - Use Case depende de Adapter concreto
+
+package com.mvbr.store.application.service;
+
+import com.mvbr.store.infrastructure.adapter.out.persistence.JpaPaymentRepository;  // ❌ ERRO!
+
+public class ApprovePaymentService {
+
+    private final JpaPaymentRepository repository;  // ❌ Adapter concreto!
+
+    public ApprovePaymentService(JpaPaymentRepository repository) {
+        this.repository = repository;
+    }
+}
+
+POR QUE ESTÁ ERRADO?
+├─ Use Case conhece implementação concreta (JPA)!
+├─ Trocar Mongo? Use Case precisa mudar!
+└─ Impossível testar com Fake!
+
+
+// ✅ CORRETO - Use Case depende de Port
+
+package com.mvbr.store.application.service;
+
+import com.mvbr.store.application.port.out.PaymentRepository;  // ✅ Port!
+
+public class ApprovePaymentService {
+
+    private final PaymentRepository repository;  // ✅ Interface!
+
+    public ApprovePaymentService(PaymentRepository repository) {
+        this.repository = repository;
+    }
+}
+```
+
+### ❌ Armadilha 3: Port Retorna Tipo de Infraestrutura
+
+```java
+// ❌ ERRADO - Port retorna PaymentEntity (JPA)
+
+package com.mvbr.store.application.port.out;
+
+import com.mvbr.store.infrastructure.adapter.out.persistence.entity.PaymentEntity;  // ❌ ERRO!
+
+public interface PaymentRepository {
+    PaymentEntity save(PaymentEntity entity);  // ❌ Tipo de Infrastructure!
+}
+
+POR QUE ESTÁ ERRADO?
+├─ Port conhece detalhe de implementação (PaymentEntity)!
+├─ Application depende de Infrastructure!
+└─ Violação da Dependency Rule!
+
+
+// ✅ CORRETO - Port retorna Domain Model
+
+package com.mvbr.store.application.port.out;
+
+import com.mvbr.store.domain.model.payment.Payment;  // ✅ Domain!
+
+public interface PaymentRepository {
+    Payment save(Payment payment);  // ✅ Domain Model!
+}
+```
+
+---
+
+## 9. Checklist Hexagonal
 
 ```
-DOMAIN LAYER
-[ ] Modelos de domínio SEM annotations de frameworks
-[ ] Validações no construtor
-[ ] Lógica de negócio nos métodos do domain
-[ ] Exceções de domínio criadas
-[ ] Testes unitários (sem Spring) com 80%+ cobertura
+ANTES DE IMPLEMENTAR:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-APPLICATION LAYER
-[ ] Inbound Ports (use cases) definidos
-[ ] Outbound Ports (dependências) definidos
-[ ] Commands e Responses criados (records)
-[ ] Services implementam use cases
-[ ] Services anotados com @Service e @Transactional
-[ ] Services dependem de PORTAS (não de implementações)
+☐ Identificou o DOMÍNIO (regras de negócio)?
+☐ Domínio está ISOLADO (zero frameworks)?
+☐ Definiu os PORTS (interfaces)?
+☐ Ports estão no VOCABULÁRIO do domínio?
+☐ Identificou Inbound vs Outbound?
 
-INFRASTRUCTURE LAYER - PERSISTENCE
-[ ] Entidade JPA com @Entity, @Table
-[ ] JPA Repository criado (extends JpaRepository)
-[ ] Mapper Domain ↔ Entity
-[ ] Adapter implementa PaymentRepositoryPort
-[ ] Adapter anotado com @Component
+ESTRUTURA DE PASTAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-INFRASTRUCTURE LAYER - MESSAGING
-[ ] Eventos Kafka criados (records)
-[ ] Mapper Domain → Event
-[ ] Producer Kafka criado
-[ ] Adapter implementa PaymentEventPublisherPort
-[ ] Adapter anotado com @Component
+☐ domain/ (não importa NADA)
+☐ application/port/in/ (Inbound Ports)
+☐ application/port/out/ (Outbound Ports)
+☐ application/service/ (Use Case Services)
+☐ infrastructure/adapter/in/ (Inbound Adapters)
+☐ infrastructure/adapter/out/ (Outbound Adapters)
 
-INFRASTRUCTURE LAYER - WEB
-[ ] DTOs HTTP criados (records)
-[ ] Mapper DTO ↔ Command/Response
-[ ] Controller criado (@RestController)
-[ ] Controller depende de USE CASE (não de service)
-[ ] Exception handler configurado
+DOMAIN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CONFIGURAÇÕES
-[ ] application.yaml configurado
-[ ] KafkaConfig (se necessário)
-[ ] Flyway migration SQL criado
-[ ] Testes de integração funcionando
+☐ Entities têm comportamento (não apenas getters/setters)
+☐ Value Objects são imutáveis
+☐ Zero anotações de framework (@Entity, @Table, etc)
+☐ Zero imports de infrastructure
+☐ Validações no construtor
 
-TESTES
-[ ] Testes de domain (puros) - 80%+
-[ ] Testes de use case (com mocks) - 70%+
-[ ] Testes de integração (E2E) - casos principais
+PORTS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DOCUMENTAÇÃO
-[ ] README com arquitetura
-[ ] Diagrama de camadas
-[ ] Exemplos de uso da API
+☐ Interfaces (não classes concretas)
+☐ Vocabulário do domínio (save, não persist)
+☐ Retornam Domain Models (não Entities JPA)
+☐ Definidas por Application (não Infrastructure)
+
+ADAPTERS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ Implementam Ports
+☐ Conhecem tecnologias (JPA, Kafka, REST)
+☐ Convertem Domain ↔ Tecnologia
+☐ NÃO têm lógica de negócio
+
+TESTES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ Domain testado SEM frameworks
+☐ Use Case testado com Fake Adapters
+☐ Adapters testados com tecnologia real
+☐ Testes rápidos (domínio em milissegundos)
 ```
+
+---
+
+## 10. Exercícios Práticos
+
+### Exercício 1: Identificar Violações
+
+Encontre as violações da Arquitetura Hexagonal neste código:
+
+```java
+// Domain
+package com.example.domain;
+
+import javax.persistence.Entity;  // ❓ Violação?
+import javax.persistence.Id;
+
+@Entity  // ❓ Violação?
+public class Product {
+    @Id
+    private String productId;
+    private BigDecimal price;
+
+    // getters e setters...
+}
+
+// Use Case
+package com.example.application;
+
+import com.example.infrastructure.JpaProductRepository;  // ❓ Violação?
+
+public class UpdatePriceService {
+
+    private final JpaProductRepository repository;  // ❓ Violação?
+
+    public void updatePrice(String productId, BigDecimal newPrice) {
+        Product product = repository.findById(productId);  // ❓ Violação?
+        product.setPrice(newPrice);
+        repository.save(product);
+    }
+}
+```
+
+**Dica:** Há pelo menos 4 violações!
+
+### Exercício 2: Refatorar para Hexagonal
+
+Refatore este código para Arquitetura Hexagonal:
+
+```java
+@Service
+public class OrderService {
+
+    @Autowired
+    private OrderRepository orderRepository;  // Spring Data JPA
+
+    public void placeOrder(OrderRequest request) {
+        Order order = new Order();
+        order.setCustomerId(request.getCustomerId());
+        order.setItems(request.getItems());
+        order.setStatus("PLACED");
+
+        orderRepository.save(order);
+
+        // Enviar email
+        EmailService.send(order.getCustomerId(), "Order placed!");
+    }
+}
+```
+
+**Tarefas:**
+1. Criar Domain Model (Order)
+2. Criar Inbound Port (PlaceOrderUseCase)
+3. Criar Outbound Ports (OrderRepository, EmailSender)
+4. Criar Use Case Service
+5. Criar Adapters
+
+### Exercício 3: Adicionar Novo Adapter
+
+Dado este Port:
+
+```java
+public interface PaymentGateway {
+    PaymentResult process(PaymentRequest request);
+}
+```
+
+Crie 2 Adapters:
+1. `StripePaymentGateway` (integração com Stripe)
+2. `FakePaymentGateway` (para testes)
 
 ---
 
 ## Conclusão
 
-Este tutorial mostrou na **PRÁTICA** como implementar Arquitetura Hexagonal em projetos de produção.
+Parabéns! 🎉 Você domina Arquitetura Hexagonal!
 
-### Próximos Passos
+**O que você aprendeu:**
+✅ Conceitos fundamentais (Hexágono, Ports, Adapters)
+✅ Por que Hexagonal é melhor que Camadas
+✅ Ports (Inbound e Outbound)
+✅ Adapters (Drivers e Driven)
+✅ Dependency Rule (sempre para dentro)
+✅ Testes isolados e rápidos
+✅ Trocar tecnologias sem dor
 
-1. Explore o código deste projeto (`ms-producer`) - está 100% implementado!
-2. Pratique criando novos use cases
-3. Adicione novos adapters (ex: MongoDB, Redis)
-4. Implemente CQRS e Event Sourcing
+**Lembre-se:**
+> "Arquitetura Hexagonal protege seu domínio de mudanças tecnológicas.
+> Tecnologias mudam, negócio permanece."
 
-### Resumo Rápido
+**Próximos passos:**
+1. Refatore código existente para Hexagonal
+2. Crie Fake Adapters para testes rápidos
+3. Experimente trocar Adapters (JPA → Mongo)
+4. Leia: "Hexagonal Architecture" (Alistair Cockburn)
 
-```
-┌─────────────────────────────────────────┐
-│  HEXAGONAL EM 30 SEGUNDOS:             │
-├─────────────────────────────────────────┤
-│                                         │
-│  1. Domain = Lógica pura (sem @Entity) │
-│  2. Ports = Interfaces                  │
-│  3. Adapters = Implementações (JPA/Kafka)│
-│  4. Use Cases = Orquestração            │
-│                                         │
-│  REGRA DE OURO:                         │
-│  Domain → Ports ← Adapters              │
-│  (Dependency Inversion!)                │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-**Bom trabalho! 🚀**
+🚀 Agora construa software resiliente a mudanças com Arquitetura Hexagonal!
