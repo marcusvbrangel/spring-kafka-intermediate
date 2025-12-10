@@ -1,0 +1,361 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 3,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "traces"
+      ],
+      "targetBlank": true,
+      "title": "Traces",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "metrics"
+      ],
+      "targetBlank": true,
+      "title": "Metrics",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki_ds"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 162
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "body"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 489
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "level"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 93
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Log Level"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "mode": "gradient",
+                  "type": "color-background",
+                  "wrapText": false
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "DEBUG": {
+                        "color": "light-yellow",
+                        "index": 0
+                      },
+                      "ERROR": {
+                        "color": "red",
+                        "index": 1
+                      },
+                      "INFO": {
+                        "color": "light-green",
+                        "index": 2
+                      },
+                      "WARN": {
+                        "color": "orange",
+                        "index": 3
+                      },
+                      "TRACE": {
+                        "color": "#404040",
+                        "index": 4
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 118
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Message"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 653
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 134
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 19,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.2.0-16711121739",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki_ds"
+          },
+          "direction": "forward",
+          "editorMode": "code",
+          "expr": "{service_name=~\".+\"} |= `` | json",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Application Log",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {
+              "Line": true,
+              "Time": true,
+              "Trace": true,
+              "attributes_exception_message": false,
+              "attributes_exception_stacktrace": false,
+              "attributes_exception_type": false,
+              "body": false,
+              "detected_level": true,
+              "exception_message": true,
+              "exception_stacktrace": true,
+              "exception_type": false,
+              "id": false,
+              "job": true,
+              "labelTypes": false,
+              "labels": false,
+              "level": true,
+              "scope_name": true,
+              "service_name": true
+            },
+            "indexByName": {
+              "Line": 3,
+              "Time": 0,
+              "Trace": 1,
+              "__error__": 9,
+              "__error_details__": 10,
+              "container_id": 11,
+              "debug_enabled": 34,
+              "detected_level": 12,
+              "exception_message": 38,
+              "exception_stacktrace": 39,
+              "exception_type": 40,
+              "flags": 7,
+              "guru": 41,
+              "host_arch": 13,
+              "host_name": 14,
+              "id": 6,
+              "labelTypes": 8,
+              "labels": 4,
+              "observed_timestamp": 15,
+              "os_description": 16,
+              "os_type": 17,
+              "process_command_args": 18,
+              "process_executable_path": 19,
+              "process_pid": 20,
+              "process_runtime_description": 21,
+              "process_runtime_name": 22,
+              "process_runtime_version": 23,
+              "scope_name": 24,
+              "service_instance_id": 25,
+              "service_name": 2,
+              "service_version": 26,
+              "severity_number": 27,
+              "severity_text": 28,
+              "span_id": 35,
+              "telemetry_distro_name": 29,
+              "telemetry_distro_version": 30,
+              "telemetry_sdk_language": 31,
+              "telemetry_sdk_name": 32,
+              "telemetry_sdk_version": 33,
+              "trace_flags": 36,
+              "trace_id": 37,
+              "tsNs": 5
+            },
+            "renameByName": {
+              "Line": "Message",
+              "detected_level": "Log Level",
+              "exception_message": "Exception Message",
+              "exception_stacktrace": "Stacktrace",
+              "service_name": "Service",
+              "scope_name": "Class"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Time"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": [
+    "logs"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Logs",
+  "uid": "bdf11913-fb9c-4fa0-b18f-5565983bf7d5",
+  "version": 1
+}

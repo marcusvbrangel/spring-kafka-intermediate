@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/prometheus-alerts.yaml
+
+scrape_configs:
+  - job_name: 'otel-collector'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['otel-collector:9464']
+
+  - job_name: 'postgres-ms-producer'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['postgres-exporter-producer:9187']
+        labels:
+          database: 'ms-producer'
+
+  - job_name: 'postgres-ms-consumer'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['postgres-exporter-consumer:9187']
+        labels:
+          database: 'ms-consumer'

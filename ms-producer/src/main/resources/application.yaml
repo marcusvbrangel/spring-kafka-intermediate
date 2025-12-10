@@ -96,3 +96,26 @@ spring.task:
   scheduling:
     pool:
       size: 2  # Número de threads para scheduled tasks
+
+
+# ===============================================================================================
+# OPEN TELEMETRY
+# ===============================================================================================
+otel:
+  sdk:
+    disabled: false
+  exporter:
+    otlp:
+      endpoint: http://localhost:4318  # HTTP endpoint
+  resource:
+    attributes:
+      service.name: ms-producer
+      service.version: 0.0.1
+      deployment.environment: development
+  metrics:
+    export:
+      interval: 60000
+  traces:
+    sampler:
+      probability: 1.0
+

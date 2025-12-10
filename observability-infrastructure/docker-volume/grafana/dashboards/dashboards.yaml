@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'traceflix'
+    orgId: 1
+    folder: 'TraceFlix'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 0   # 0 = disable auto update
+    options:
+      path: /etc/grafana/provisioning/dashboards
+

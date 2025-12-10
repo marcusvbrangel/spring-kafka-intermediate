@@ -1,0 +1,79 @@
+services:
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.133.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel/collector-config.yml"]
+    volumes:
+      - ./docker-volume/collector-config.yaml:/etc/otel/collector-config.yml
+    ports:
+      - "4317:4317"  # gRPC
+      - "4318:4318"  # HTTP
+  loki:
+    image: grafana/loki:3.5.3
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./docker-volume/loki.yaml:/etc/loki/loki-config.yaml
+    depends_on:
+      - otel-collector
+  tempo:
+    image: grafana/tempo:2.8.2
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker-volume/tempo.yaml:/etc/tempo.yaml
+    depends_on:
+      - otel-collector
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: prometheus
+    volumes:
+      - ./docker-volume/prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - ./docker-volume/prometheus-alerts.yaml:/etc/prometheus/prometheus-alerts.yaml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+  postgres-exporter-producer:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter-producer
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@host.docker.internal:5432/ms-producer?sslmode=disable"
+    ports:
+      - "9187:9187"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  postgres-exporter-consumer:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter-consumer
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@host.docker.internal:5432/ms-consumer?sslmode=disable"
+    ports:
+      - "9188:9187"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:12.0
+    container_name: grafana
+    volumes:
+      - ./docker-volume/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./docker-volume/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+
+
+
+
