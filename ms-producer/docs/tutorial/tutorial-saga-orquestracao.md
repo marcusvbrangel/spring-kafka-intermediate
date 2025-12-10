@@ -1881,6 +1881,1196 @@ Resultado:
 
 ## 13. Implementação Completa com Spring Boot {#implementação-completa}
 
-Vou continuar na próxima parte devido ao tamanho...
+### 13.1. Estrutura de Projeto
 
-*(Continuação no próximo arquivo)*
+```
+saga-orchestrator-service/
+├── src/main/java/com/company/saga/
+│   ├── SagaOrchestratorApplication.java
+│   ├── domain/
+│   │   ├── model/
+│   │   │   ├── Saga.java
+│   │   │   ├── SagaStep.java
+│   │   │   ├── SagaState.java
+│   │   │   └── SagaType.java
+│   │   └── repository/
+│   │       ├── SagaRepository.java
+│   │       └── IdempotencyRepository.java
+│   ├── application/
+│   │   ├── orchestrator/
+│   │   │   └── OrderSagaOrchestrator.java
+│   │   ├── dto/
+│   │   │   ├── CreateOrderSagaRequest.java
+│   │   │   └── SagaResponse.java
+│   │   └── controller/
+│   │       └── SagaController.java
+│   ├── infrastructure/
+│   │   ├── client/
+│   │   │   ├── OrderServiceClient.java
+│   │   │   ├── PaymentServiceClient.java
+│   │   │   └── InventoryServiceClient.java
+│   │   └── config/
+│   │       ├── FeignConfig.java
+│   │       └── MetricsConfig.java
+│   └── job/
+│       └── SagaRecoveryJob.java
+├── src/main/resources/
+│   ├── application.yml
+│   └── db/migration/
+│       └── V1__create_sagas_table.sql
+└── pom.xml
+```
+
+### 13.2. Dependências (pom.xml)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+    </parent>
+
+    <groupId>com.company</groupId>
+    <artifactId>saga-orchestrator-service</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+
+        <!-- Flyway (migrations) -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
+        <!-- Feign (HTTP clients) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- Resilience4j (Circuit Breaker, Retry) -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+        </dependency>
+
+        <!-- Micrometer (Métricas) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Sleuth (Distributed Tracing) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+```
+
+### 13.3. Configuração (application.yml)
+
+```yaml
+# application.yml
+spring:
+  application:
+    name: saga-orchestrator-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/saga_orchestrator
+    username: saga_user
+    password: saga_pass
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Flyway gerencia schema
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # Sleuth (Tracing)
+  sleuth:
+    sampler:
+      probability: 1.0  # 100% em dev, reduzir em prod
+
+  zipkin:
+    base-url: http://localhost:9411
+
+# URLs dos microserviços
+services:
+  order:
+    url: http://localhost:8081
+  payment:
+    url: http://localhost:8082
+  inventory:
+    url: http://localhost:8083
+
+# Feign
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+  retry:
+    instances:
+      default:
+        maxAttempts: 3
+        waitDuration: 1s
+        exponentialBackoffMultiplier: 2
+
+# Actuator (Métricas)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    com.company.saga: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Saga Config
+saga:
+  recovery:
+    enabled: true
+    interval: 60000  # 1 minuto
+  timeout:
+    duration: 300000  # 5 minutos
+
+server:
+  port: 8080
+```
+
+### 13.4. Migration (Flyway)
+
+```sql
+-- V1__create_sagas_table.sql
+CREATE TABLE sagas (
+    id UUID PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    payload JSONB NOT NULL,
+    executed_steps JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_sagas_state ON sagas(state);
+CREATE INDEX idx_sagas_type ON sagas(type);
+CREATE INDEX idx_sagas_created_at ON sagas(created_at);
+
+-- Tabela de idempotência
+CREATE TABLE idempotency_records (
+    key VARCHAR(255) PRIMARY KEY,
+    response JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_idempotency_created_at ON idempotency_records(created_at);
+
+-- Cleanup job: Remove registros antigos (> 7 dias)
+CREATE OR REPLACE FUNCTION cleanup_old_idempotency_records()
+RETURNS void AS $$
+BEGIN
+    DELETE FROM idempotency_records
+    WHERE created_at < NOW() - INTERVAL '7 days';
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 13.5. Application Class
+
+```java
+package com.company.saga;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@EnableFeignClients
+@EnableScheduling
+public class SagaOrchestratorApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SagaOrchestratorApplication.class, args);
+    }
+}
+```
+
+### 13.6. Docker Compose (Desenvolvimento)
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Saga Orchestrator Database
+  saga-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: saga_orchestrator
+      POSTGRES_USER: saga_user
+      POSTGRES_PASSWORD: saga_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - saga-db-data:/var/lib/postgresql/data
+
+  # Saga Orchestrator Service
+  saga-orchestrator:
+    build: ./saga-orchestrator-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://saga-db:5432/saga_orchestrator
+      SERVICES_ORDER_URL: http://order-service:8081
+      SERVICES_PAYMENT_URL: http://payment-service:8082
+      SERVICES_INVENTORY_URL: http://inventory-service:8083
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+    depends_on:
+      - saga-db
+      - zipkin
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/order_service
+
+  # Payment Service
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment_service
+
+  # Inventory Service
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventory_service
+
+  # Zipkin (Tracing)
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+
+  # Prometheus (Métricas)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  # Grafana (Dashboard)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+volumes:
+  saga-db-data:
+```
+
+---
+
+## 14. Testes {#testes}
+
+### 14.1. Teste Unitário (Orchestrator)
+
+```java
+@ExtendWith(MockitoExtension.class)
+class OrderSagaOrchestratorTest {
+
+    @Mock
+    private SagaRepository sagaRepository;
+
+    @Mock
+    private OrderServiceClient orderClient;
+
+    @Mock
+    private PaymentServiceClient paymentClient;
+
+    @Mock
+    private InventoryServiceClient inventoryClient;
+
+    @InjectMocks
+    private OrderSagaOrchestrator orchestrator;
+
+    @Test
+    void shouldCompleteSagaSuccessfully() {
+        // Arrange
+        CreateOrderSagaRequest request = new CreateOrderSagaRequest(
+            UUID.randomUUID(),
+            List.of(new OrderItem("Product1", 2)),
+            BigDecimal.valueOf(100.00)
+        );
+
+        UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        UUID reservationId = UUID.randomUUID();
+
+        when(orderClient.createOrder(any()))
+            .thenReturn(new OrderResponse(orderId, OrderStatus.PENDING));
+
+        when(paymentClient.processPayment(any()))
+            .thenReturn(new PaymentResponse(paymentId, PaymentStatus.APPROVED));
+
+        when(inventoryClient.reserveItems(any()))
+            .thenReturn(new InventoryResponse(reservationId, ReservationStatus.RESERVED));
+
+        // Act
+        Saga saga = orchestrator.startCreateOrderSaga(request);
+
+        // Assert
+        assertThat(saga.getState()).isEqualTo(SagaState.COMPLETED);
+        assertThat(saga.getExecutedSteps()).hasSize(3);
+
+        verify(orderClient).createOrder(any());
+        verify(paymentClient).processPayment(any());
+        verify(inventoryClient).reserveItems(any());
+
+        // Não deve chamar compensações
+        verify(orderClient, never()).cancelOrder(any());
+        verify(paymentClient, never()).refundPayment(any());
+    }
+
+    @Test
+    void shouldCompensateWhenInventoryFails() {
+        // Arrange
+        CreateOrderSagaRequest request = new CreateOrderSagaRequest(
+            UUID.randomUUID(),
+            List.of(new OrderItem("Product1", 2)),
+            BigDecimal.valueOf(100.00)
+        );
+
+        UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+
+        when(orderClient.createOrder(any()))
+            .thenReturn(new OrderResponse(orderId, OrderStatus.PENDING));
+
+        when(paymentClient.processPayment(any()))
+            .thenReturn(new PaymentResponse(paymentId, PaymentStatus.APPROVED));
+
+        when(inventoryClient.reserveItems(any()))
+            .thenThrow(new OutOfStockException("Product1 out of stock"));
+
+        // Act
+        Saga saga = orchestrator.startCreateOrderSaga(request);
+
+        // Assert
+        assertThat(saga.getState()).isEqualTo(SagaState.FAILED);
+
+        // Deve executar compensações
+        verify(paymentClient).refundPayment(paymentId);
+        verify(orderClient).cancelOrder(orderId);
+    }
+
+    @Test
+    void shouldHandleIdempotency() {
+        // Arrange
+        UUID orderId = UUID.randomUUID();
+        String idempotencyKey = "saga-123-step-CreateOrder";
+
+        // Primeira chamada
+        when(orderClient.createOrder(any()))
+            .thenReturn(new OrderResponse(orderId, OrderStatus.PENDING));
+
+        // Segunda chamada (retry) - deve retornar mesma resposta
+        when(orderClient.createOrder(any()))
+            .thenReturn(new OrderResponse(orderId, OrderStatus.PENDING));
+
+        // Act
+        OrderResponse response1 = orchestrator.createOrder(request, idempotencyKey);
+        OrderResponse response2 = orchestrator.createOrder(request, idempotencyKey);
+
+        // Assert
+        assertThat(response1.orderId()).isEqualTo(response2.orderId());
+        verify(orderClient, times(1)).createOrder(any()); // Só chamou 1x
+    }
+}
+```
+
+### 14.2. Teste de Integração
+
+```java
+@SpringBootTest
+@Testcontainers
+@AutoConfigureMockMvc
+class SagaIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+        .withDatabaseName("saga_test")
+        .withUsername("test")
+        .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private SagaRepository sagaRepository;
+
+    @MockBean
+    private OrderServiceClient orderClient;
+
+    @MockBean
+    private PaymentServiceClient paymentClient;
+
+    @MockBean
+    private InventoryServiceClient inventoryClient;
+
+    @Test
+    void shouldCreateSagaViaAPI() throws Exception {
+        // Arrange
+        UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        UUID reservationId = UUID.randomUUID();
+
+        when(orderClient.createOrder(any()))
+            .thenReturn(new OrderResponse(orderId, OrderStatus.PENDING));
+
+        when(paymentClient.processPayment(any()))
+            .thenReturn(new PaymentResponse(paymentId, PaymentStatus.APPROVED));
+
+        when(inventoryClient.reserveItems(any()))
+            .thenReturn(new InventoryResponse(reservationId, ReservationStatus.RESERVED));
+
+        String requestBody = """
+            {
+                "userId": "123e4567-e89b-12d3-a456-426614174000",
+                "items": [
+                    {"productId": "Product1", "quantity": 2}
+                ],
+                "amount": 100.00
+            }
+            """;
+
+        // Act & Assert
+        mockMvc.perform(post("/api/sagas/create-order")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.sagaId").exists())
+            .andExpect(jsonPath("$.state").value("COMPLETED"));
+
+        // Verifica banco
+        List<Saga> sagas = sagaRepository.findAll();
+        assertThat(sagas).hasSize(1);
+        assertThat(sagas.get(0).getState()).isEqualTo(SagaState.COMPLETED);
+    }
+
+    @Test
+    void shouldPersistSagaState() {
+        // Arrange
+        Saga saga = Saga.start(SagaType.CREATE_ORDER, Map.of("userId", "123"));
+
+        // Act
+        Saga saved = sagaRepository.save(saga);
+
+        // Assert
+        Saga found = sagaRepository.findById(saved.getId()).orElseThrow();
+        assertThat(found.getState()).isEqualTo(SagaState.STARTED);
+        assertThat(found.getPayload()).containsEntry("userId", "123");
+    }
+}
+```
+
+### 14.3. Teste de Contract (Pact)
+
+```java
+@ExtendWith(PactConsumerTestExt.class)
+@PactTestFor(providerName = "order-service")
+class OrderServiceContractTest {
+
+    @Pact(consumer = "saga-orchestrator")
+    public RequestResponsePact createOrderPact(PactDslWithProvider builder) {
+        return builder
+            .given("order can be created")
+            .uponReceiving("create order request")
+                .path("/api/orders")
+                .method("POST")
+                .body(new PactDslJsonBody()
+                    .uuid("userId", "123e4567-e89b-12d3-a456-426614174000")
+                    .decimalType("amount", 100.00))
+            .willRespondWith()
+                .status(200)
+                .body(new PactDslJsonBody()
+                    .uuid("orderId")
+                    .stringValue("status", "PENDING"))
+            .toPact();
+    }
+
+    @Test
+    @PactTestFor(pactMethod = "createOrderPact")
+    void testCreateOrder(MockServer mockServer) {
+        // Configura client para usar mock
+        OrderServiceClient client = Feign.builder()
+            .target(OrderServiceClient.class, mockServer.getUrl());
+
+        // Testa contrato
+        OrderResponse response = client.createOrder(
+            new CreateOrderRequest(
+                UUID.fromString("123e4567-e89b-12d3-a456-426614174000"),
+                BigDecimal.valueOf(100.00)
+            )
+        );
+
+        assertThat(response.status()).isEqualTo(OrderStatus.PENDING);
+    }
+}
+```
+
+---
+
+## 15. Armadilhas Comuns {#armadilhas}
+
+### 15.1. Não Persistir Estado da Saga
+
+```java
+// ❌ ERRADO: Estado em memória
+public class OrderSagaOrchestrator {
+    private Map<UUID, SagaState> sagaStates = new HashMap<>(); // PERDE DADOS!
+
+    public void executeSaga(UUID sagaId) {
+        sagaStates.put(sagaId, SagaState.STARTED);
+        // Se serviço reiniciar, perde tudo
+    }
+}
+
+// ✅ CORRETO: Persistir no banco
+public class OrderSagaOrchestrator {
+    private final SagaRepository sagaRepository;
+
+    public void executeSaga(Saga saga) {
+        saga.transitionTo(SagaState.STARTED);
+        sagaRepository.save(saga); // ← Persiste
+    }
+}
+```
+
+---
+
+### 15.2. Compensações Não Idempotentes
+
+```java
+// ❌ ERRADO: Compensação não idempotente
+public void refundPayment(UUID paymentId) {
+    Payment payment = paymentRepository.findById(paymentId).orElseThrow();
+    payment.setAmount(payment.getAmount().add(refundAmount)); // ← PROBLEMA: Se chamar 2x, refund duplicado!
+    paymentRepository.save(payment);
+}
+
+// ✅ CORRETO: Compensação idempotente
+public void refundPayment(UUID paymentId, String idempotencyKey) {
+    if (idempotencyRepository.exists(idempotencyKey)) {
+        return; // Já foi reembolsado
+    }
+
+    Payment payment = paymentRepository.findById(paymentId).orElseThrow();
+
+    if (payment.getStatus() == PaymentStatus.REFUNDED) {
+        return; // Já foi reembolsado
+    }
+
+    payment.refund();
+    paymentRepository.save(payment);
+
+    idempotencyRepository.save(new IdempotencyRecord(idempotencyKey));
+}
+```
+
+---
+
+### 15.3. Não Tratar Falhas em Compensações
+
+```java
+// ❌ ERRADO: Ignora falhas em compensação
+private void compensate(Saga saga) {
+    try {
+        paymentClient.refundPayment(paymentId);
+    } catch (Exception e) {
+        log.error("Refund failed", e);
+        // E AGORA? Cliente foi cobrado mas não reembolsado!
+    }
+}
+
+// ✅ CORRETO: Retry + DLQ
+@Retryable(maxAttempts = 5)
+private void compensate(Saga saga) {
+    try {
+        paymentClient.refundPayment(paymentId);
+    } catch (Exception e) {
+        log.error("Refund failed after retries", e);
+
+        // Envia para DLQ
+        deadLetterQueue.send(new FailedCompensationMessage(saga.getId(), "RefundPayment"));
+
+        // Alerta time de ops
+        alertService.sendCriticalAlert("SAGA COMPENSATION FAILED", saga.getId());
+
+        // Marca saga como COMPENSATION_FAILED
+        saga.transitionTo(SagaState.COMPENSATION_FAILED);
+        sagaRepository.save(saga);
+    }
+}
+```
+
+---
+
+### 15.4. Timeout Muito Curto
+
+```java
+// ❌ ERRADO: Timeout muito curto
+@FeignClient(name = "payment-service")
+public interface PaymentServiceClient {
+    // Timeout padrão: 1s
+    PaymentResponse processPayment(ProcessPaymentRequest request);
+}
+
+// Payment Service pode levar 5s para processar
+// → Timeout → Retry → Duplicação!
+
+// ✅ CORRETO: Timeout adequado + idempotência
+@Configuration
+public class FeignConfig {
+    @Bean
+    public Request.Options options() {
+        return new Request.Options(
+            5000,   // connect timeout: 5s
+            30000   // read timeout: 30s (tempo suficiente para processar)
+        );
+    }
+}
+```
+
+---
+
+### 15.5. Ordem Errada de Compensação
+
+```java
+// ❌ ERRADO: Compensa na ordem normal
+private void compensate(Saga saga) {
+    compensateCreateOrder(saga);     // 1º
+    compensateProcessPayment(saga);  // 2º
+    compensateReserveInventory(saga);// 3º
+    // PROBLEMA: Se payment falhar, order já foi cancelado!
+}
+
+// ✅ CORRETO: Ordem REVERSA
+private void compensate(Saga saga) {
+    List<SagaStep> steps = saga.getCompensationSteps(); // Já retorna em ordem reversa
+
+    for (SagaStep step : steps) {
+        compensateStep(step);
+    }
+}
+```
+
+---
+
+## 16. Quando Usar Orquestração {#quando-usar}
+
+### 16.1. Use Orquestração Quando:
+
+✅ **Fluxo complexo com muitas regras de negócio**
+
+```
+Exemplo: Processo de aprovação de empréstimo
+1. Validar crédito (serviço externo)
+2. SE score > 700: aprovar direto
+   SENÃO: mandar para análise manual
+3. Calcular taxa de juros (depende de múltiplos fatores)
+4. Gerar contrato
+5. Enviar para assinatura digital
+6. Debitar tarifa
+
+→ Orquestrador gerencia toda essa lógica facilmente
+```
+
+✅ **Necessita visibilidade centralizada**
+
+```
+Dashboard mostrando:
+- Quantas sagas estão rodando
+- Qual passo está cada saga
+- Taxa de sucesso por passo
+- Tempo médio de cada passo
+
+→ Orquestrador centraliza todas essas informações
+```
+
+✅ **Compensações complexas**
+
+```
+Exemplo: Reserva de viagem (voo + hotel + carro)
+SE hotel falhar:
+  - Cancelar voo
+  - Cancelar carro
+  - Reembolsar cliente
+  - Enviar e-mail com opções alternativas
+
+→ Orquestrador coordena toda a compensação
+```
+
+✅ **Equipe pequena/média**
+
+```
+3-10 desenvolvedores podem entender e manter 1 orquestrador
+mais facilmente do que lógica distribuída em N serviços
+```
+
+---
+
+### 16.2. NÃO Use Orquestração Quando:
+
+❌ **Fluxo simples e linear**
+
+```
+Exemplo: Criar user → Enviar e-mail de boas-vindas
+→ Coreografia é mais simples (evento UserCreated)
+```
+
+❌ **Precisa de alta disponibilidade (sem single point of failure)**
+
+```
+Se orquestrador cair, TODAS as sagas param
+→ Use coreografia para eliminar ponto único de falha
+```
+
+❌ **Serviços altamente desacoplados**
+
+```
+Se cada serviço deve operar de forma totalmente independente
+→ Coreografia é melhor
+```
+
+---
+
+## 17. Checklist de Implementação {#checklist}
+
+### Antes de Começar
+
+- [ ] Identifiquei todos os passos da transação distribuída?
+- [ ] Defini compensação para cada passo?
+- [ ] Verifiquei que compensações são idempotentes?
+- [ ] Defini timeout para cada chamada de serviço?
+- [ ] Defini timeout total da saga?
+
+### Durante Implementação
+
+- [ ] Criei entidade Saga com estado persistido em banco?
+- [ ] Implementei State Machine com todos os estados?
+- [ ] Cada passo da saga é idempotente (com idempotency key)?
+- [ ] Compensações executam em ordem REVERSA?
+- [ ] Implementei retry com backoff exponencial?
+- [ ] Implementei Circuit Breaker nos clientes HTTP?
+- [ ] Adicionei logs estruturados com sagaId em cada passo?
+- [ ] Configurei distributed tracing (Sleuth/Zipkin)?
+- [ ] Criei métricas (sucesso, falha, latência por passo)?
+- [ ] Implementei job de recovery para sagas travadas?
+- [ ] Implementei tratamento para falhas em compensações (DLQ)?
+- [ ] Criei testes unitários para cada passo?
+- [ ] Criei testes de integração para saga completa?
+- [ ] Testei cenários de falha e compensação?
+
+### Após Deploy
+
+- [ ] Monitorei taxa de sucesso das sagas?
+- [ ] Monitorei latência de cada passo?
+- [ ] Configurei alertas para sagas travadas?
+- [ ] Configurei alertas para compensações falhadas?
+- [ ] Documentei processo de recovery manual?
+- [ ] Treinei time em troubleshooting de sagas?
+
+---
+
+## 18. Exercícios Práticos {#exercícios-práticos}
+
+### Exercício 1: Implementar Saga Simples
+
+**Cenário:** Criar uma saga para "Transferência Bancária" com 2 passos:
+1. Debitar conta de origem
+2. Creditar conta de destino
+
+**Tarefas:**
+- Implemente o orquestrador
+- Defina compensações
+- Teste cenário de sucesso
+- Teste cenário de falha no passo 2
+
+**Solução:**
+
+```java
+@Service
+public class TransferSagaOrchestrator {
+
+    private final AccountServiceClient accountClient;
+
+    public Saga startTransferSaga(TransferRequest request) {
+        Saga saga = Saga.start(SagaType.TRANSFER, Map.of(
+            "fromAccountId", request.fromAccountId(),
+            "toAccountId", request.toAccountId(),
+            "amount", request.amount()
+        ));
+
+        sagaRepository.save(saga);
+
+        executeStep1_DebitFromAccount(saga);
+
+        return saga;
+    }
+
+    private void executeStep1_DebitFromAccount(Saga saga) {
+        try {
+            UUID fromAccountId = UUID.fromString(
+                saga.getPayload().get("fromAccountId").toString()
+            );
+            BigDecimal amount = (BigDecimal) saga.getPayload().get("amount");
+
+            accountClient.debit(fromAccountId, amount);
+
+            saga.recordStep(SagaStep.command("DebitFromAccount").markCompleted());
+            saga.transitionTo(SagaState.DEBIT_COMPLETED);
+            sagaRepository.save(saga);
+
+            executeStep2_CreditToAccount(saga);
+
+        } catch (InsufficientFundsException e) {
+            saga.recordStep(SagaStep.command("DebitFromAccount").markFailed(e.getMessage()));
+            saga.transitionTo(SagaState.FAILED);
+            sagaRepository.save(saga);
+        }
+    }
+
+    private void executeStep2_CreditToAccount(Saga saga) {
+        try {
+            UUID toAccountId = UUID.fromString(
+                saga.getPayload().get("toAccountId").toString()
+            );
+            BigDecimal amount = (BigDecimal) saga.getPayload().get("amount");
+
+            accountClient.credit(toAccountId, amount);
+
+            saga.recordStep(SagaStep.command("CreditToAccount").markCompleted());
+            saga.transitionTo(SagaState.COMPLETED);
+            sagaRepository.save(saga);
+
+        } catch (Exception e) {
+            // FALHA → Compensar
+            saga.recordStep(SagaStep.command("CreditToAccount").markFailed(e.getMessage()));
+            sagaRepository.save(saga);
+
+            compensate(saga);
+        }
+    }
+
+    private void compensate(Saga saga) {
+        saga.transitionTo(SagaState.COMPENSATING);
+
+        // Estorna débito
+        UUID fromAccountId = UUID.fromString(
+            saga.getPayload().get("fromAccountId").toString()
+        );
+        BigDecimal amount = (BigDecimal) saga.getPayload().get("amount");
+
+        accountClient.credit(fromAccountId, amount); // Devolve dinheiro
+
+        saga.transitionTo(SagaState.FAILED);
+        sagaRepository.save(saga);
+    }
+}
+```
+
+---
+
+### Exercício 2: Implementar Timeout de Saga
+
+**Cenário:** Saga não pode demorar mais de 2 minutos.
+
+**Tarefa:** Implemente job que cancela sagas que excedem timeout.
+
+**Solução:**
+
+```java
+@Component
+@Slf4j
+public class SagaTimeoutJob {
+
+    private final SagaRepository sagaRepository;
+    private final OrderSagaOrchestrator orchestrator;
+
+    @Scheduled(fixedDelay = 30000) // Roda a cada 30s
+    public void cancelTimedOutSagas() {
+        LocalDateTime twoMinutesAgo = LocalDateTime.now().minusMinutes(2);
+
+        List<Saga> timedOutSagas = sagaRepository.findActiveSagasCreatedBefore(
+            twoMinutesAgo
+        );
+
+        for (Saga saga : timedOutSagas) {
+            log.warn("Saga {} timed out (created {})",
+                saga.getId(), saga.getCreatedAt());
+
+            try {
+                orchestrator.compensate(saga);
+            } catch (Exception e) {
+                log.error("Failed to compensate timed out saga: {}", saga.getId(), e);
+            }
+        }
+    }
+}
+
+// Repository
+@Repository
+public interface SagaRepository extends JpaRepository<Saga, UUID> {
+
+    @Query("""
+        SELECT s FROM Saga s
+        WHERE s.state IN :activeStates
+        AND s.createdAt < :before
+        """)
+    List<Saga> findActiveSagasCreatedBefore(
+        @Param("before") LocalDateTime before,
+        @Param("activeStates") List<SagaState> activeStates
+    );
+
+    default List<Saga> findActiveSagasCreatedBefore(LocalDateTime before) {
+        return findActiveSagasCreatedBefore(before, List.of(
+            SagaState.STARTED,
+            SagaState.ORDER_CREATED,
+            SagaState.PAYMENT_PROCESSED
+        ));
+    }
+}
+```
+
+---
+
+### Exercício 3: Implementar Dashboard de Sagas
+
+**Cenário:** Criar endpoint REST que retorna estatísticas das sagas.
+
+**Tarefa:** Implemente endpoint `/api/sagas/stats`.
+
+**Solução:**
+
+```java
+@RestController
+@RequestMapping("/api/sagas")
+public class SagaStatsController {
+
+    private final SagaRepository sagaRepository;
+
+    @GetMapping("/stats")
+    public SagaStatsResponse getStats(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+        LocalDateTime since
+    ) {
+        if (since == null) {
+            since = LocalDateTime.now().minusDays(1); // Últimas 24h
+        }
+
+        List<Saga> sagas = sagaRepository.findByCreatedAtAfter(since);
+
+        long total = sagas.size();
+        long completed = sagas.stream()
+            .filter(s -> s.getState() == SagaState.COMPLETED)
+            .count();
+        long failed = sagas.stream()
+            .filter(s -> s.getState() == SagaState.FAILED)
+            .count();
+        long inProgress = sagas.stream()
+            .filter(s -> s.getState() != SagaState.COMPLETED && s.getState() != SagaState.FAILED)
+            .count();
+
+        // Latência média
+        Duration avgDuration = sagas.stream()
+            .filter(s -> s.getState() == SagaState.COMPLETED)
+            .map(s -> Duration.between(s.getCreatedAt(), s.getUpdatedAt()))
+            .reduce(Duration.ZERO, Duration::plus)
+            .dividedBy(Math.max(completed, 1));
+
+        return new SagaStatsResponse(
+            total,
+            completed,
+            failed,
+            inProgress,
+            completed * 100.0 / Math.max(total, 1), // Success rate
+            avgDuration.toMillis()
+        );
+    }
+}
+
+public record SagaStatsResponse(
+    long total,
+    long completed,
+    long failed,
+    long inProgress,
+    double successRate,
+    long avgDurationMs
+) {}
+```
+
+**Resultado:**
+
+```json
+{
+  "total": 1234,
+  "completed": 1180,
+  "failed": 54,
+  "inProgress": 0,
+  "successRate": 95.6,
+  "avgDurationMs": 850
+}
+```
+
+---
+
+## Conclusão
+
+**Saga Pattern com Orquestração** é uma solução poderosa para gerenciar transações distribuídas em arquiteturas de microserviços. O padrão oferece:
+
+✅ **Controle centralizado** - Orquestrador coordena todo o fluxo
+✅ **Visibilidade** - Fácil rastrear estado de cada saga
+✅ **Compensações coordenadas** - Rollback distribuído gerenciado
+✅ **Retry e resiliência** - Recuperação automática de falhas
+✅ **Eventual consistency** - Sistema sempre volta ao estado consistente
+
+**Pontos-chave para lembrar:**
+
+1. **Persista o estado** - Saga DEVE ser persistida em banco
+2. **Idempotência** - Todos os passos e compensações devem ser idempotentes
+3. **Ordem de compensação** - SEMPRE em ordem reversa
+4. **Timeout** - Defina timeout para passos e saga completa
+5. **Monitoramento** - Logs, métricas e tracing são essenciais
+6. **DLQ** - Tenha plano B para compensações falhadas
+
+**Quando usar:**
+- Fluxos complexos com muitas regras
+- Precisa de visibilidade centralizada
+- Equipe pequena/média
+- Compensações complexas
+
+**Quando NÃO usar:**
+- Fluxos simples e lineares
+- Precisa eliminar single point of failure
+- Serviços totalmente desacoplados
+
+Com este conhecimento, você está preparado para implementar Saga Pattern com Orquestração de forma robusta e resiliente! 🚀
