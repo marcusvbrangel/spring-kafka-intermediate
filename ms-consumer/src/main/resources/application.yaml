@@ -110,14 +110,54 @@ otel:
   exporter:
     otlp:
       endpoint: http://localhost:4318  # HTTP endpoint
+      protocol: http/protobuf  # Explicitly set protocol
+  instrumentation:
+    spring-web:
+      enabled: true
+    spring-webmvc:
+      enabled: true
+    kafka:
+      enabled: true
+    jdbc:
+      enabled: true
   resource:
     attributes:
       service.name: ms-consumer
       service.version: 0.0.1
       deployment.environment: development
+  # Enable metrics export via OTLP
   metrics:
+    exporter: otlp
     export:
-      interval: 60000
+      interval: 10000  # Export every 10 seconds (was 60s)
+  # Enable traces export via OTLP
   traces:
+    exporter: otlp
     sampler:
       probability: 1.0
+  # Enable logs export via OTLP
+  logs:
+    exporter: otlp
+
+# ===============================================================================================
+# ACTUATOR CONFIGURATION
+# ===============================================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,loggers
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  otlp:
+    metrics:
+      export:
+        enabled: true
+        url: http://localhost:4318/v1/metrics
+    tracing:
+      endpoint: http://localhost:4318/v1/traces

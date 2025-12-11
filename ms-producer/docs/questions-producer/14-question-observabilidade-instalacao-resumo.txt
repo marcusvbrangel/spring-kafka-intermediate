@@ -1,4 +1,13 @@
 
+-----------------------------------------------------------------------------------------------------------------------
+
+As aplicações agora vão exportar métricas, traces e logs para o OpenTelemetry Collector, que por sua vez envia para:
+  - 📊 Métricas → Prometheus → Grafana
+  - 🔍 Traces → Tempo → Grafana
+  - 📝 Logs → Loki → Grafana
+
+-----------------------------------------------------------------------------------------------------------------------
+
 ● Vou criar um resumo completo da solução de observabilidade implementada:
 
   🎉 STACK COMPLETA DE OBSERVABILIDADE IMPLEMENTADA!

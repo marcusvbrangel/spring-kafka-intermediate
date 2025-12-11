@@ -1,0 +1,55 @@
+
+
+📚 Conteúdo do Tutorial (11 Seções Completas):
+
+  1. O que é Domínio Rico - Comparação detalhada entre domínio anêmico vs rico
+  2. Payment - Visão Geral - Contexto de negócio, linguagem ubíqua, regras e invariantes
+  3. Builder Pattern com DDD - Padrões, convenções e exemplos completos
+  4. Value Objects - Money, PaymentId, Customer, PaymentMetadata (implementação completa)
+  5. Implementação TDD Passo a Passo - Construção gradual com Payment, PaymentItem, Enums
+  6. Validações de Domínio Ricas - 3 tipos de validações com exemplos práticos
+  7. Métodos Builder Avançados - with(), from(), of(), add() com exemplos reais
+  8. Testes Unitários Completos - 60+ testes organizados em categorias
+  9. Invariantes de Domínio - Como garantir que o domínio esteja sempre válido
+  10. Checklist e Boas Práticas - Guia completo do que fazer e não fazer
+  11. Exercícios Práticos - 5 exercícios para consolidar o aprendizado
+
+  🎯 Destaques do Tutorial:
+
+  - ✅ Código completo e executável - Payment, PaymentItem, Value Objects, Builder
+  - ✅ 60+ testes unitários - Cobrindo todos os cenários possíveis
+  - ✅ Builder Pattern profissional - with, from, of, add implementados
+  - ✅ DDD aplicado corretamente - Aggregate Root, Value Objects, Entities
+  - ✅ Validações ricas - Estruturais, de domínio e de invariantes
+  - ✅ Diagramas visuais - ASCII art explicando conceitos
+  - ✅ Comparações ❌ vs ✅ - Mostra o certo e o errado
+  - ✅ Mesma qualidade dos outros tutoriais - Padrão de excelência mantido
+
+  💪 Diferencial:
+
+  Este tutorial é auto-suficiente e pode ser sua única fonte de estudos sobre:
+  - Domínio Rico com DDD
+  - Builder Pattern em Java
+  - Validações de domínio
+  - Value Objects e Entities
+  - Testes unitários de domínio
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

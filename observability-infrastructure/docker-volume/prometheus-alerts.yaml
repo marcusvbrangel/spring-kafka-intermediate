@@ -1,0 +1,115 @@
+groups:
+  - name: microservices_alerts
+    interval: 30s
+    rules:
+      # HTTP Latência Alta
+      - alert: HighHTTPLatency
+        expr: histogram_quantile(0.95, rate(http_server_request_duration_seconds_bucket{exported_job="ms-producer"}[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: ms-producer
+        annotations:
+          summary: "High HTTP latency on ms-producer"
+          description: "P95 latency is {{ $value }}s (threshold: 1s)"
+
+      # Taxa de Erro HTTP Alta
+      - alert: HighHTTPErrorRate
+        expr: rate(http_server_request_duration_seconds_count{exported_job="ms-producer", outcome="SERVER_ERROR"}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+          service: ms-producer
+        annotations:
+          summary: "High HTTP error rate on ms-producer"
+          description: "Error rate is {{ $value }} req/s"
+
+      # Consumer Lag Alto
+      - alert: HighConsumerLag
+        expr: kafka_consumer_group_lag{group="ms-consumer"} > 10000
+        for: 5m
+        labels:
+          severity: warning
+          service: ms-consumer
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "Consumer lag is {{ $value }} messages"
+
+      # Memória JVM Alta
+      - alert: HighJVMMemoryUsage
+        expr: (jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap memory usage on {{ $labels.exported_job }}"
+          description: "Heap usage is {{ $value | humanizePercentage }}"
+
+      # HikariCP - Pool Esgotado
+      - alert: ConnectionPoolExhausted
+        expr: hikaricp_connections_pending > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HikariCP connection pool exhausted on {{ $labels.exported_job }}"
+          description: "{{ $value }} connections are pending"
+
+      # PostgreSQL - Cache Hit Ratio Baixo
+      - alert: LowDatabaseCacheHitRatio
+        expr: |
+          (
+            rate(pg_stat_database_blks_hit{database=~"ms-producer|ms-consumer"}[5m])
+            /
+            (rate(pg_stat_database_blks_hit{database=~"ms-producer|ms-consumer"}[5m]) + rate(pg_stat_database_blks_read{database=~"ms-producer|ms-consumer"}[5m]))
+          ) < 0.95
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit ratio on {{ $labels.database }}"
+          description: "Cache hit ratio is {{ $value | humanizePercentage }} (should be >95%)"
+
+      # PostgreSQL - Muitas Conexões Ativas
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends{database=~"ms-producer|ms-consumer"} > 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of database connections on {{ $labels.database }}"
+          description: "{{ $value }} active connections"
+
+      # PostgreSQL - Deadlocks
+      - alert: DatabaseDeadlocks
+        expr: increase(pg_stat_database_deadlocks{database=~"ms-producer|ms-consumer"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Deadlocks detected on {{ $labels.database }}"
+          description: "{{ $value }} deadlocks in the last 5 minutes"
+
+      # Slow Queries (através do HikariCP acquire time)
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(hikaricp_connections_acquire_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected on {{ $labels.exported_job }}"
+          description: "P95 connection acquire time is {{ $value }}s (possible slow queries)"
+
+      # Rollback Rate Alto (possível erro no código)
+      - alert: HighRollbackRate
+        expr: |
+          rate(pg_stat_database_xact_rollback{database=~"ms-producer|ms-consumer"}[5m])
+          /
+          (rate(pg_stat_database_xact_commit{database=~"ms-producer|ms-consumer"}[5m]) + rate(pg_stat_database_xact_rollback{database=~"ms-producer|ms-consumer"}[5m]))
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High transaction rollback rate on {{ $labels.database }}"
+          description: "Rollback rate is {{ $value | humanizePercentage }}"
