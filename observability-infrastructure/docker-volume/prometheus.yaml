@@ -24,3 +24,19 @@ scrape_configs:
       - targets: ['postgres-exporter-consumer:9187']
         labels:
           database: 'ms-consumer'
+
+  - job_name: 'ms-producer-actuator'
+    scrape_interval: 10s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['localhost:5050']
+        labels:
+          service: 'ms-producer'
+
+  - job_name: 'ms-consumer-actuator'
+    scrape_interval: 10s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['localhost:5051']
+        labels:
+          service: 'ms-consumer'

@@ -110,13 +110,14 @@
           },
           "filters": [
             {
-              "id": "89349037",
+              "id": "service-name-filter",
               "isCustomValue": false,
-              "operator": "=",
-              "scope": "intrinsic",
-              "tag": "rootName",
+              "operator": "=~",
+              "scope": "resource",
+              "tag": "service.name",
               "value": [
-                "GET /api/movies/{movieId}"
+                "ms-producer",
+                "ms-consumer"
               ],
               "valueType": "string"
             },
