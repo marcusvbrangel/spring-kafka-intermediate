@@ -15,7 +15,7 @@ class PaymentDomainTest {
     // =======================================
 
     @Test
-    @DisplayName("Should create payment with valid data")
+    @DisplayName("Should create payment with valid data using of() factory method")
     void shouldCreatePaymentWithValidData() {
         // Arrange
         String paymentId = "pay_123";
@@ -24,7 +24,7 @@ class PaymentDomainTest {
         String currency = "usd";
 
         // Act
-        PaymentDomain payment = new PaymentDomain(paymentId, userId, amount, currency);
+        PaymentDomain payment = PaymentDomain.of(paymentId, userId, amount, currency);
 
         // Assert
         assertNotNull(payment);
@@ -40,7 +40,7 @@ class PaymentDomainTest {
     @DisplayName("Should convert currency to uppercase")
     void shouldConvertCurrencyToUppercase() {
         // Arrange & Act
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("50.00"), "brl");
 
         // Assert
@@ -51,7 +51,7 @@ class PaymentDomainTest {
     @DisplayName("Should initialize with PENDING status")
     void shouldInitializeWithPendingStatus() {
         // Arrange & Act
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("50.00"), "USD");
 
         // Assert
@@ -70,7 +70,7 @@ class PaymentDomainTest {
         long createdAt = System.currentTimeMillis() - 10000;
 
         // Act
-        PaymentDomain payment = new PaymentDomain(paymentId, userId, amount,
+        PaymentDomain payment = PaymentDomain.of(paymentId, userId, amount,
             currency, status, createdAt);
 
         // Assert
@@ -91,7 +91,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenPaymentIdIsNull() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain(null, "user_1", new BigDecimal("100.00"), "USD")
+            PaymentDomain.of(null, "user_1", new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("paymentId cannot be null or empty", exception.getMessage());
@@ -102,7 +102,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenPaymentIdIsEmpty() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("", "user_1", new BigDecimal("100.00"), "USD")
+            PaymentDomain.of("", "user_1", new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("paymentId cannot be null or empty", exception.getMessage());
@@ -113,7 +113,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenPaymentIdIsBlank() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("   ", "user_1", new BigDecimal("100.00"), "USD")
+            PaymentDomain.of("   ", "user_1", new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("paymentId cannot be null or empty", exception.getMessage());
@@ -128,7 +128,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenUserIdIsNull() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", null, new BigDecimal("100.00"), "USD")
+            PaymentDomain.of("pay_1", null, new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("userId cannot be null or empty", exception.getMessage());
@@ -139,7 +139,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenUserIdIsEmpty() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "", new BigDecimal("100.00"), "USD")
+            PaymentDomain.of("pay_1", "", new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("userId cannot be null or empty", exception.getMessage());
@@ -150,7 +150,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenUserIdIsBlank() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "   ", new BigDecimal("100.00"), "USD")
+            PaymentDomain.of("pay_1", "   ", new BigDecimal("100.00"), "USD")
         );
 
         assertEquals("userId cannot be null or empty", exception.getMessage());
@@ -165,7 +165,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenAmountIsNull() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", null, "USD")
+            PaymentDomain.of("pay_1", "user_1", null, "USD")
         );
 
         assertEquals("amount must be greater than zero", exception.getMessage());
@@ -176,7 +176,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenAmountIsZero() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", BigDecimal.ZERO, "USD")
+            PaymentDomain.of("pay_1", "user_1", BigDecimal.ZERO, "USD")
         );
 
         assertEquals("amount must be greater than zero", exception.getMessage());
@@ -187,7 +187,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenAmountIsNegative() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", new BigDecimal("-50.00"), "USD")
+            PaymentDomain.of("pay_1", "user_1", new BigDecimal("-50.00"), "USD")
         );
 
         assertEquals("amount must be greater than zero", exception.getMessage());
@@ -202,7 +202,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenCurrencyIsNull() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", new BigDecimal("100.00"), null)
+            PaymentDomain.of("pay_1", "user_1", new BigDecimal("100.00"), null)
         );
 
         assertEquals("currency cannot be null or empty", exception.getMessage());
@@ -213,7 +213,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenCurrencyIsEmpty() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", new BigDecimal("100.00"), "")
+            PaymentDomain.of("pay_1", "user_1", new BigDecimal("100.00"), "")
         );
 
         assertEquals("currency cannot be null or empty", exception.getMessage());
@@ -224,7 +224,7 @@ class PaymentDomainTest {
     void shouldThrowExceptionWhenCurrencyIsBlank() {
         // Arrange & Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            new PaymentDomain("pay_1", "user_1", new BigDecimal("100.00"), "   ")
+            PaymentDomain.of("pay_1", "user_1", new BigDecimal("100.00"), "   ")
         );
 
         assertEquals("currency cannot be null or empty", exception.getMessage());
@@ -238,7 +238,7 @@ class PaymentDomainTest {
     @DisplayName("Should mark payment as APPROVED when status is PENDING")
     void shouldMarkPaymentAsApprovedWhenStatusIsPending() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD");
 
         assertEquals(PaymentStatus.PENDING, payment.getStatus());
@@ -254,7 +254,7 @@ class PaymentDomainTest {
     @DisplayName("Should throw exception when trying to approve a CANCELED payment")
     void shouldThrowExceptionWhenTryingToApproveCanceledPayment() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD", PaymentStatus.CANCELED,
             System.currentTimeMillis());
 
@@ -271,7 +271,7 @@ class PaymentDomainTest {
     @DisplayName("Should mark already APPROVED payment as APPROVED (idempotent)")
     void shouldMarkAlreadyApprovedPaymentAsApproved() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD", PaymentStatus.APPROVED,
             System.currentTimeMillis());
 
@@ -292,7 +292,7 @@ class PaymentDomainTest {
     @DisplayName("Should cancel payment when status is PENDING")
     void shouldCancelPaymentWhenStatusIsPending() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD");
 
         assertEquals(PaymentStatus.PENDING, payment.getStatus());
@@ -308,7 +308,7 @@ class PaymentDomainTest {
     @DisplayName("Should throw exception when trying to cancel an APPROVED payment")
     void shouldThrowExceptionWhenTryingToCancelApprovedPayment() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD", PaymentStatus.APPROVED,
             System.currentTimeMillis());
 
@@ -325,7 +325,7 @@ class PaymentDomainTest {
     @DisplayName("Should cancel already CANCELED payment (idempotent)")
     void shouldCancelAlreadyCanceledPayment() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_1", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_1", "user_1",
             new BigDecimal("100.00"), "USD", PaymentStatus.CANCELED,
             System.currentTimeMillis());
 
@@ -346,10 +346,10 @@ class PaymentDomainTest {
     @DisplayName("Should be equal when paymentId is the same")
     void shouldBeEqualWhenPaymentIdIsTheSame() {
         // Arrange
-        PaymentDomain payment1 = new PaymentDomain("pay_123", "user_1",
+        PaymentDomain payment1 = PaymentDomain.of("pay_123", "user_1",
             new BigDecimal("100.00"), "USD");
 
-        PaymentDomain payment2 = new PaymentDomain("pay_123", "user_2",
+        PaymentDomain payment2 = PaymentDomain.of("pay_123", "user_2",
             new BigDecimal("200.00"), "EUR");
 
         // Assert
@@ -361,10 +361,10 @@ class PaymentDomainTest {
     @DisplayName("Should not be equal when paymentId is different")
     void shouldNotBeEqualWhenPaymentIdIsDifferent() {
         // Arrange
-        PaymentDomain payment1 = new PaymentDomain("pay_123", "user_1",
+        PaymentDomain payment1 = PaymentDomain.of("pay_123", "user_1",
             new BigDecimal("100.00"), "USD");
 
-        PaymentDomain payment2 = new PaymentDomain("pay_456", "user_1",
+        PaymentDomain payment2 = PaymentDomain.of("pay_456", "user_1",
             new BigDecimal("100.00"), "USD");
 
         // Assert
@@ -376,7 +376,7 @@ class PaymentDomainTest {
     @DisplayName("Should be equal to itself")
     void shouldBeEqualToItself() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_123", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_123", "user_1",
             new BigDecimal("100.00"), "USD");
 
         // Assert
@@ -387,7 +387,7 @@ class PaymentDomainTest {
     @DisplayName("Should not be equal to null")
     void shouldNotBeEqualToNull() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_123", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_123", "user_1",
             new BigDecimal("100.00"), "USD");
 
         // Assert
@@ -398,7 +398,7 @@ class PaymentDomainTest {
     @DisplayName("Should not be equal to different class")
     void shouldNotBeEqualToDifferentClass() {
         // Arrange
-        PaymentDomain payment = new PaymentDomain("pay_123", "user_1",
+        PaymentDomain payment = PaymentDomain.of("pay_123", "user_1",
             new BigDecimal("100.00"), "USD");
 
         String differentObject = "pay_123";

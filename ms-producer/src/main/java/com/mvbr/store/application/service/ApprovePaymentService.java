@@ -67,9 +67,9 @@ public class ApprovePaymentService implements ApprovePaymentUseCase {
     public PaymentResponse approvePayment(ApprovePaymentCommand command) {
 
         // ============================
-        // 1. Create Domain Model (validation in constructor)
+        // 1. Create Domain Model (validation in builder)
         // ============================
-        PaymentDomain payment = new PaymentDomain(
+        PaymentDomain payment = PaymentDomain.of(
                 command.paymentId(),
                 command.userId(),
                 command.amount(),

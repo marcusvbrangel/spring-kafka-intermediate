@@ -34,7 +34,7 @@ public class PaymentPersistenceMapper {
     /**
      * Converts PaymentEntity (JPA) to PaymentDomain (domain).
      *
-     * Uses the "restore from database" constructor.
+     * Uses PaymentDomain.restore() to reconstruct from database without validation.
      *
      * @param entity the JPA entity
      * @return the domain object
@@ -42,7 +42,7 @@ public class PaymentPersistenceMapper {
     public PaymentDomain toDomain(PaymentEntity entity) {
         if (entity == null) return null;
 
-        return new PaymentDomain(
+        return PaymentDomain.restore(
                 entity.getPaymentId(),
                 entity.getUserId(),
                 entity.getAmount(),

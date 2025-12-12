@@ -251,13 +251,21 @@
       private final PaymentApprovedProducer producer;
 
       public void approvePayment(PaymentApprovedRequest request) {
-          // 1. Cria entidade de domínio
-          Payment payment = new Payment(
-              request.paymentId(),
-              request.userId(),
-              request.amount(),
-              request.currency()
-          );
+          // 1. Cria entidade de domínio usando Builder pattern
+          Payment payment = Payment.builder()
+              .withPaymentId(request.paymentId())
+              .withUserId(request.userId())
+              .withAmount(request.amount())
+              .withCurrency(request.currency())
+              .build();
+
+          // OU usando factory method 'of':
+          // Payment payment = Payment.of(
+          //     request.paymentId(),
+          //     request.userId(),
+          //     request.amount(),
+          //     request.currency()
+          // );
 
           // 2. Executa lógica de domínio
           payment.markApproved();

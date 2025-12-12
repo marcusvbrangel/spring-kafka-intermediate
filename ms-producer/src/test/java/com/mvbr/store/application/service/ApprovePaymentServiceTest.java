@@ -64,7 +64,7 @@ class ApprovePaymentServiceTest {
         );
 
         // Create saved payment (as if returned from repository)
-        savedPayment = new PaymentDomain(
+        savedPayment = PaymentDomain.of(
                 "pay_123",
                 "user_456",
                 new BigDecimal("100.00"),
@@ -415,7 +415,7 @@ class ApprovePaymentServiceTest {
         // When/Then
         for (String currency : currencies) {
             // Create a specific saved payment for each currency
-            PaymentDomain currencyPayment = new PaymentDomain(
+            PaymentDomain currencyPayment = PaymentDomain.of(
                     "pay_" + currency,
                     "user_456",
                     new BigDecimal("100.00"),
@@ -449,7 +449,7 @@ class ApprovePaymentServiceTest {
                 "USD"
         );
 
-        PaymentDomain largePayment = new PaymentDomain(
+        PaymentDomain largePayment = PaymentDomain.of(
                 "pay_large",
                 "user_456",
                 new BigDecimal("999999999.99"),
@@ -480,7 +480,7 @@ class ApprovePaymentServiceTest {
                 "USD"
         );
 
-        PaymentDomain minPayment = new PaymentDomain(
+        PaymentDomain minPayment = PaymentDomain.of(
                 "pay_min",
                 "user_456",
                 new BigDecimal("0.01"),
