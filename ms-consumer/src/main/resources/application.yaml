@@ -127,33 +127,3 @@ otel:
     attributes:
       service.version: 0.0.1
       deployment.environment: development
-
-# ===============================================================================================
-# ACTUATOR CONFIGURATION
-# ===============================================================================================
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,env,loggers
-      base-path: /actuator
-  endpoint:
-    health:
-      show-details: always
-    prometheus:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-    tags:
-      application: ${spring.application.name}
-      environment: development
-    enable:
-      jvm: true
-      process: true
-      system: true
-      tomcat: true
-      hikaricp: true
-      jdbc: true
-      kafka: true
