@@ -233,9 +233,9 @@
             "type": "loki",
             "uid": "loki_ds"
           },
-          "direction": "forward",
+          "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=~\".+\"} |= `` | json",
+          "expr": "{service_name=~\".+\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -332,7 +332,8 @@
             "fields": {},
             "sort": [
               {
-                "field": "Time"
+                "field": "Time",
+                "desc": true
               }
             ]
           }
