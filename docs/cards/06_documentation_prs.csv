@@ -1,0 +1,103 @@
+Front;Back
+I'm creating a pull request.;Estou criando um pull request.
+Can you review my PR?;Você pode revisar meu PR?
+I left some comments on your PR.;Deixei alguns comentários no seu PR.
+Please address the review comments.;Por favor, trate os comentários da revisão.
+I've addressed all the feedback.;Tratei todo o feedback.
+The PR is ready for merge.;O PR está pronto para merge.
+Let me merge this PR.;Deixa eu fazer merge deste PR.
+I'm merging to main branch.;Estou fazendo merge para o branch main.
+There are merge conflicts.;Há conflitos de merge.
+I need to resolve the conflicts.;Preciso resolver os conflitos.
+Let me rebase on main.;Deixa eu fazer rebase no main.
+I'm rebasing my branch.;Estou fazendo rebase do meu branch.
+The branch is up to date.;O branch está atualizado.
+Please pull the latest changes.;Por favor, puxe as últimas mudanças.
+I'm pushing my commits.;Estou enviando meus commits.
+Force push is not recommended.;Force push não é recomendado.
+Let me squash these commits.;Deixa eu squash esses commits.
+The commit message should be descriptive.;A mensagem do commit deve ser descritiva.
+I'm writing a detailed commit message.;Estou escrevendo uma mensagem de commit detalhada.
+Follow the conventional commit format.;Siga o formato de commit convencional.
+The commit follows semantic versioning.;O commit segue versionamento semântico.
+This is a breaking change.;Esta é uma mudança que quebra compatibilidade.
+I'm adding a BREAKING CHANGE footer.;Estou adicionando um rodapé de BREAKING CHANGE.
+The PR description explains the changes.;A descrição do PR explica as mudanças.
+I've included screenshots in the PR.;Incluí screenshots no PR.
+Let me add a test plan.;Deixa eu adicionar um plano de teste.
+The PR is linked to the ticket.;O PR está vinculado ao ticket.
+I'm referencing the issue number.;Estou referenciando o número da issue.
+This fixes #123.;Isso corrige #123.
+This closes the ticket.;Isso fecha o ticket.
+I'm requesting a review.;Estou solicitando uma revisão.
+Can you be a reviewer?;Você pode ser um revisor?
+I've assigned reviewers.;Atribuí revisores.
+The review is approved.;A revisão está aprovada.
+There are requested changes.;Há mudanças solicitadas.
+I need to make some changes.;Preciso fazer algumas mudanças.
+Let me update the PR.;Deixa eu atualizar o PR.
+I'm adding more commits.;Estou adicionando mais commits.
+The CI checks are passing.;As verificações de CI estão passando.
+The build failed on CI.;O build falhou no CI.
+Let me fix the failing tests.;Deixa eu corrigir os testes que estão falhando.
+All checks have passed.;Todas as verificações passaram.
+The linter found some issues.;O linter encontrou alguns problemas.
+I'm fixing the linting errors.;Estou corrigindo os erros de linting.
+The code formatting is off.;A formatação do código está errada.
+Let me run the formatter.;Deixa eu rodar o formatador.
+I'm using prettier to format code.;Estou usando prettier para formatar código.
+The code style follows the guidelines.;O estilo do código segue as diretrizes.
+We have a style guide.;Temos um guia de estilo.
+Please follow the coding standards.;Por favor, siga os padrões de codificação.
+I'm documenting the API.;Estou documentando a API.
+The function needs documentation.;A função precisa de documentação.
+Let me add JSDoc comments.;Deixa eu adicionar comentários JSDoc.
+I'm writing inline comments.;Estou escrevendo comentários inline.
+The comment explains the why, not the what.;O comentário explica o porquê, não o quê.
+This code is self-documenting.;Este código é auto-documentado.
+Let me add a README file.;Deixa eu adicionar um arquivo README.
+The README explains how to run the project.;O README explica como rodar o projeto.
+I'm updating the documentation.;Estou atualizando a documentação.
+The docs are out of date.;A documentação está desatualizada.
+Let's keep the documentation current.;Vamos manter a documentação atual.
+I'm adding usage examples.;Estou adicionando exemplos de uso.
+The example shows how to use the API.;O exemplo mostra como usar a API.
+Let me document the edge cases.;Deixa eu documentar os casos extremos.
+I'm adding a troubleshooting section.;Estou adicionando uma seção de troubleshooting.
+The FAQ answers common questions.;O FAQ responde perguntas comuns.
+I'm creating a wiki page.;Estou criando uma página wiki.
+The documentation is hosted on GitHub Pages.;A documentação está hospedada no GitHub Pages.
+Let me generate the API docs.;Deixa eu gerar a documentação da API.
+I'm using Swagger for API documentation.;Estou usando Swagger para documentação da API.
+The OpenAPI spec is documented.;A especificação OpenAPI está documentada.
+I'm adding annotations for Swagger.;Estou adicionando anotações para Swagger.
+The endpoint is documented with examples.;O endpoint está documentado com exemplos.
+I'm describing the request parameters.;Estou descrevendo os parâmetros da requisição.
+The response schema is documented.;O schema de resposta está documentado.
+Let me add error code documentation.;Deixa eu adicionar documentação de códigos de erro.
+I'm documenting the configuration options.;Estou documentando as opções de configuração.
+The environment variables are listed.;As variáveis de ambiente estão listadas.
+Let me create a CHANGELOG.;Deixa eu criar um CHANGELOG.
+I'm updating the changelog.;Estou atualizando o changelog.
+The changelog lists all changes.;O changelog lista todas as mudanças.
+This goes in the unreleased section.;Isso vai na seção unreleased.
+I'm preparing the release notes.;Estou preparando as notas de release.
+The release notes summarize changes.;As notas de release resumem as mudanças.
+Let me tag this release.;Deixa eu marcar este release.
+I'm creating a git tag.;Estou criando uma tag git.
+The version is bumped to 2.0.0.;A versão foi aumentada para 2.0.0.
+We're following semantic versioning.;Estamos seguindo versionamento semântico.
+This is a major version bump.;Este é um aumento de versão major.
+I'm incrementing the minor version.;Estou incrementando a versão minor.
+This is a patch release.;Este é um release de patch.
+Let me draft the release.;Deixa eu rascunhar o release.
+The release is published.;O release está publicado.
+I'm archiving the old documentation.;Estou arquivando a documentação antiga.
+The deprecated features are marked.;As funcionalidades depreciadas estão marcadas.
+Let me add a deprecation notice.;Deixa eu adicionar um aviso de depreciação.
+This will be removed in v3.0.;Isso será removido na v3.0.
+I'm maintaining backward compatibility.;Estou mantendo compatibilidade retroativa.
+The migration guide explains the upgrade path.;O guia de migração explica o caminho de upgrade.
+Let me write a migration script.;Deixa eu escrever um script de migração.
+I'm creating a pull request template.;Estou criando um template de pull request.
+The template includes a checklist.;O template inclui uma checklist.

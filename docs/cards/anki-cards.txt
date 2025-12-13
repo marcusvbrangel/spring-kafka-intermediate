@@ -1,0 +1,93 @@
+
+
+● Perfeito! Criei 1535 flashcards em 7 arquivos CSV prontos para importação no Anki! 🎉
+
+  📊 Resumo dos Arquivos Criados
+
+  Desenvolvimento e Infraestrutura (1017 cards)
+
+  1. 01_backend_development.csv - 201 cards
+    - Java, Spring Boot, REST APIs
+    - JPA/Hibernate, validação, exceptions
+    - Kafka, mensageria, cache
+    - Testes, segurança, monitoramento
+  2. 02_devops_infrastructure.csv - 198 cards
+    - Docker, containers
+    - Kubernetes (pods, deployments, services)
+    - CI/CD pipelines
+    - Terraform, monitoring (Prometheus, Grafana)
+    - Backups, disaster recovery
+  3. 03_scrum_agile.csv - 195 cards
+    - Daily standup, sprint planning
+    - Retrospectives, reviews
+    - User stories, story points
+    - Product backlog, agile values
+  4. 04_communication_meetings.csv - 204 cards
+    - Comunicação de equipe (Slack, email)
+    - Reuniões, calls, feedback
+    - Negociação, tomada de decisão
+    - Status updates, colaboração
+  5. 05_phrasal_verbs.csv - 117 cards
+    - set up, roll out, roll back
+    - break down, figure out, look into
+    - scale up/down, track down
+    - E muito mais!
+  6. 06_documentation_prs.csv - 102 cards
+    - Pull requests, code review
+    - Git (merge, rebase, conflicts)
+    - Swagger, API documentation
+    - READMEs, changelogs, releases
+
+  Entrevistas Técnicas (518 cards)
+
+  7. 07_tech_interviews.csv - 518 cards
+    - Perguntas comportamentais
+    - Java, Spring, databases
+    - Design patterns, SOLID, algoritmos
+    - System design, microservices
+    - Perguntas sobre empresa/role
+
+  📥 Como Importar no Anki
+
+  1. Abra o Anki Desktop
+  2. Clique em File > Import
+  3. Selecione o arquivo CSV desejado
+  4. Configure:
+    - Field separator: Semicolon (;)
+    - Field 1 → Front
+    - Field 2 → Back
+  5. Clique em Import
+
+  🔊 TTS (Text-to-Speech)
+
+  Para ativar leitura automática em inglês, edite o template do card e adicione:
+  {{tts en_US:Front}}
+  {{tts pt_BR:Back}}
+
+  📍 Localização dos Arquivos
+
+  /home/wolf/Documentos/desenvolvimento/freestyle/spring-kafka-intermediate/cards/
+  ├── 01_backend_development.csv
+  ├── 02_devops_infrastructure.csv
+  ├── 03_scrum_agile.csv
+  ├── 04_communication_meetings.csv
+  ├── 05_phrasal_verbs.csv
+  ├── 06_documentation_prs.csv
+  ├── 07_tech_interviews.csv
+  └── README.md
+
+  Todos os arquivos estão prontos para download e importação! O README.md contém instruções detalhadas sobre como usar os cards. Bons estudos! 🚀
+
+
+
+
+
+
+
+
+
+
+
+
+
+

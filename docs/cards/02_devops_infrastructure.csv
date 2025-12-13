@@ -1,0 +1,199 @@
+Front;Back
+I'm building the Docker image.;Estou construindo a imagem Docker.
+The container is running.;O container está rodando.
+Let's check the container logs.;Vamos verificar os logs do container.
+I'm stopping the container.;Estou parando o container.
+The image was pushed to the registry.;A imagem foi enviada para o registry.
+We need to pull the latest image.;Precisamos baixar a imagem mais recente.
+I'm creating a Dockerfile.;Estou criando um Dockerfile.
+Let's add this layer to reduce image size.;Vamos adicionar essa camada para reduzir o tamanho da imagem.
+I'm using multi-stage builds.;Estou usando builds multi-stage.
+The container is consuming too much memory.;O container está consumindo muita memória.
+Let's set resource limits.;Vamos definir limites de recursos.
+I'm configuring the container environment variables.;Estou configurando as variáveis de ambiente do container.
+The health check is failing.;O health check está falhando.
+We need to expose port 8080.;Precisamos expor a porta 8080.
+I'm mounting a volume.;Estou montando um volume.
+The data is persisted in the volume.;Os dados estão persistidos no volume.
+Let's create a Docker network.;Vamos criar uma rede Docker.
+I'm connecting the containers to the network.;Estou conectando os containers à rede.
+The services are defined in docker-compose.yml.;Os serviços estão definidos no docker-compose.yml.
+I'm running docker-compose up.;Estou rodando docker-compose up.
+Let's scale this service to 3 replicas.;Vamos escalar este serviço para 3 réplicas.
+I'm bringing down the stack.;Estou derrubando o stack.
+The container exited with code 1.;O container saiu com código 1.
+Let's investigate why it crashed.;Vamos investigar por que ele crashou.
+I'm deploying to Kubernetes.;Estou fazendo deploy no Kubernetes.
+The pod is in CrashLoopBackOff state.;O pod está em estado CrashLoopBackOff.
+Let's check the pod events.;Vamos verificar os eventos do pod.
+I'm describing the pod.;Estou descrevendo o pod.
+The deployment is rolling out.;O deployment está sendo lançado.
+We need to update the deployment manifest.;Precisamos atualizar o manifesto do deployment.
+I'm applying the configuration.;Estou aplicando a configuração.
+Let's create a namespace for this project.;Vamos criar um namespace para este projeto.
+I'm setting the context to the production cluster.;Estou definindo o contexto para o cluster de produção.
+The service is exposed via LoadBalancer.;O serviço está exposto via LoadBalancer.
+We need to configure an Ingress.;Precisamos configurar um Ingress.
+I'm adding an Ingress rule.;Estou adicionando uma regra de Ingress.
+The TLS certificate is configured.;O certificado TLS está configurado.
+Let's enable HTTPS for this domain.;Vamos habilitar HTTPS para este domínio.
+I'm creating a ConfigMap.;Estou criando um ConfigMap.
+The configuration is loaded from the ConfigMap.;A configuração é carregada do ConfigMap.
+We should use Secrets for sensitive data.;Devemos usar Secrets para dados sensíveis.
+I'm creating a Kubernetes Secret.;Estou criando um Secret do Kubernetes.
+The secret is mounted as a volume.;O secret está montado como um volume.
+Let's encode the credentials in base64.;Vamos codificar as credenciais em base64.
+I'm setting up horizontal pod autoscaling.;Estou configurando autoscaling horizontal de pods.
+The HPA is scaling based on CPU usage.;O HPA está escalando baseado no uso de CPU.
+We need to define resource requests and limits.;Precisamos definir requests e limits de recursos.
+I'm configuring the liveness probe.;Estou configurando a liveness probe.
+The readiness probe is checking if the app is ready.;A readiness probe está verificando se o app está pronto.
+Let's increase the probe timeout.;Vamos aumentar o timeout da probe.
+I'm rolling back the deployment.;Estou fazendo rollback do deployment.
+The rollout history shows previous revisions.;O histórico de rollout mostra revisões anteriores.
+We're reverting to revision 3.;Estamos revertendo para a revisão 3.
+I'm setting up a StatefulSet.;Estou configurando um StatefulSet.
+The persistent volume claim is pending.;O persistent volume claim está pendente.
+Let's provision storage for the database.;Vamos provisionar armazenamento para o banco de dados.
+I'm creating a PersistentVolume.;Estou criando um PersistentVolume.
+The volume is bound to the claim.;O volume está vinculado ao claim.
+We need more disk space.;Precisamos de mais espaço em disco.
+I'm expanding the volume.;Estou expandindo o volume.
+Let's set up monitoring with Prometheus.;Vamos configurar monitoramento com Prometheus.
+I'm exposing metrics on the /metrics endpoint.;Estou expondo métricas no endpoint /metrics.
+The metrics are being scraped.;As métricas estão sendo coletadas.
+We should create alerts for high CPU usage.;Devemos criar alertas para uso alto de CPU.
+I'm configuring Alertmanager.;Estou configurando o Alertmanager.
+The alert is firing.;O alerta está disparando.
+Let's set up a notification channel.;Vamos configurar um canal de notificação.
+I'm integrating with Slack for alerts.;Estou integrando com Slack para alertas.
+The dashboard shows the service health.;O dashboard mostra a saúde do serviço.
+We're using Grafana for visualization.;Estamos usando Grafana para visualização.
+I'm creating a custom dashboard.;Estou criando um dashboard customizado.
+Let's add panels for key metrics.;Vamos adicionar painéis para métricas chave.
+The query is pulling data from Prometheus.;A query está puxando dados do Prometheus.
+I'm setting up log aggregation.;Estou configurando agregação de logs.
+The logs are shipped to Loki.;Os logs são enviados para o Loki.
+We're centralizing logs from all pods.;Estamos centralizando logs de todos os pods.
+I'm querying logs in Grafana Loki.;Estou consultando logs no Grafana Loki.
+Let's filter logs by label.;Vamos filtrar logs por label.
+I'm setting up the CI/CD pipeline.;Estou configurando a pipeline de CI/CD.
+The pipeline is defined in .gitlab-ci.yml.;A pipeline está definida no .gitlab-ci.yml.
+We're using Jenkins for continuous integration.;Estamos usando Jenkins para integração contínua.
+I'm creating a new Jenkins job.;Estou criando um novo job do Jenkins.
+The build is running on the agent.;O build está rodando no agent.
+Let's configure the pipeline stages.;Vamos configurar os estágios da pipeline.
+I'm adding a test stage.;Estou adicionando um estágio de teste.
+The tests passed successfully.;Os testes passaram com sucesso.
+We need to fix the failing tests.;Precisamos corrigir os testes que estão falhando.
+I'm deploying to the staging environment.;Estou fazendo deploy no ambiente de staging.
+The deployment requires manual approval.;O deployment requer aprovação manual.
+Let's approve the production deployment.;Vamos aprovar o deployment de produção.
+I'm triggering the pipeline manually.;Estou disparando a pipeline manualmente.
+The pipeline failed at the build stage.;A pipeline falhou no estágio de build.
+Let's check the build logs.;Vamos verificar os logs do build.
+I'm fixing the compilation error.;Estou corrigindo o erro de compilação.
+The artifacts are being published.;Os artefatos estão sendo publicados.
+We need to cache dependencies to speed up builds.;Precisamos fazer cache de dependências para acelerar builds.
+I'm configuring the cache.;Estou configurando o cache.
+The build time was reduced by 50%.;O tempo de build foi reduzido em 50%.
+Let's parallelize the test execution.;Vamos paralelizar a execução dos testes.
+I'm running tests across multiple runners.;Estou rodando testes em múltiplos runners.
+The code coverage report is generated.;O relatório de cobertura de código foi gerado.
+We need to upload the coverage to SonarQube.;Precisamos fazer upload da cobertura para o SonarQube.
+I'm analyzing code quality.;Estou analisando a qualidade do código.
+There are code smells that need to be fixed.;Há code smells que precisam ser corrigidos.
+The technical debt is increasing.;A dívida técnica está aumentando.
+Let's refactor this code to reduce complexity.;Vamos refatorar este código para reduzir complexidade.
+I'm setting up automated security scanning.;Estou configurando scanning de segurança automatizado.
+The dependency has a known vulnerability.;A dependência tem uma vulnerabilidade conhecida.
+We need to update to a patched version.;Precisamos atualizar para uma versão corrigida.
+I'm running a container security scan.;Estou rodando um scan de segurança de container.
+The image contains critical vulnerabilities.;A imagem contém vulnerabilidades críticas.
+Let's fix the vulnerabilities before deploying.;Vamos corrigir as vulnerabilidades antes de fazer deploy.
+I'm implementing infrastructure as code.;Estou implementando infraestrutura como código.
+The infrastructure is defined in Terraform.;A infraestrutura está definida no Terraform.
+Let's apply the Terraform configuration.;Vamos aplicar a configuração do Terraform.
+I'm running terraform plan.;Estou rodando terraform plan.
+The plan shows what will be created.;O plano mostra o que será criado.
+We need to review the changes before applying.;Precisamos revisar as mudanças antes de aplicar.
+I'm provisioning the infrastructure.;Estou provisionando a infraestrutura.
+The resources are being created.;Os recursos estão sendo criados.
+Let's destroy the test environment.;Vamos destruir o ambiente de teste.
+I'm managing state in a remote backend.;Estou gerenciando estado em um backend remoto.
+The state is locked to prevent concurrent changes.;O estado está bloqueado para prevenir mudanças concorrentes.
+We should version control the Terraform files.;Devemos versionar os arquivos Terraform.
+I'm importing existing infrastructure.;Estou importando infraestrutura existente.
+Let's modularize the Terraform code.;Vamos modularizar o código Terraform.
+I'm creating reusable modules.;Estou criando módulos reutilizáveis.
+The module is published to the registry.;O módulo está publicado no registry.
+We're using Ansible for configuration management.;Estamos usando Ansible para gerenciamento de configuração.
+I'm writing an Ansible playbook.;Estou escrevendo um playbook do Ansible.
+The playbook is being executed.;O playbook está sendo executado.
+Let's run the playbook on all servers.;Vamos rodar o playbook em todos os servidores.
+I'm using roles to organize tasks.;Estou usando roles para organizar tarefas.
+The configuration is idempotent.;A configuração é idempotente.
+We can run it multiple times safely.;Podemos rodá-la múltiplas vezes com segurança.
+I'm setting up service mesh with Istio.;Estou configurando service mesh com Istio.
+The sidecar proxy is injected automatically.;O proxy sidecar é injetado automaticamente.
+We're routing traffic based on headers.;Estamos roteando tráfego baseado em headers.
+I'm implementing traffic splitting.;Estou implementando divisão de tráfego.
+Let's send 10% of traffic to the new version.;Vamos enviar 10% do tráfego para a nova versão.
+I'm configuring mutual TLS.;Estou configurando TLS mútuo.
+The services communicate securely.;Os serviços se comunicam de forma segura.
+We're enforcing network policies.;Estamos aplicando políticas de rede.
+I'm creating a NetworkPolicy.;Estou criando uma NetworkPolicy.
+The policy restricts ingress traffic.;A política restringe tráfego de entrada.
+Let's allow traffic only from specific namespaces.;Vamos permitir tráfego apenas de namespaces específicos.
+I'm setting up a VPN connection.;Estou configurando uma conexão VPN.
+The private network is accessible.;A rede privada está acessível.
+We need to whitelist this IP address.;Precisamos colocar este endereço IP na whitelist.
+I'm configuring the firewall rules.;Estou configurando as regras de firewall.
+The port is blocked by the firewall.;A porta está bloqueada pelo firewall.
+Let's open port 443 for HTTPS traffic.;Vamos abrir a porta 443 para tráfego HTTPS.
+I'm setting up SSL/TLS certificates.;Estou configurando certificados SSL/TLS.
+The certificate is issued by Let's Encrypt.;O certificado é emitido pelo Let's Encrypt.
+We need to renew the certificate.;Precisamos renovar o certificado.
+I'm automating certificate renewal.;Estou automatizando a renovação de certificado.
+The certificate is expiring soon.;O certificado está expirando em breve.
+Let's set up cert-manager in Kubernetes.;Vamos configurar cert-manager no Kubernetes.
+I'm configuring DNS records.;Estou configurando registros DNS.
+The domain is pointing to the load balancer.;O domínio está apontando para o load balancer.
+We need to add a CNAME record.;Precisamos adicionar um registro CNAME.
+I'm updating the A record.;Estou atualizando o registro A.
+The DNS propagation is in progress.;A propagação DNS está em andamento.
+It may take up to 48 hours to propagate.;Pode levar até 48 horas para propagar.
+I'm setting up a CDN.;Estou configurando uma CDN.
+The static assets are cached at the edge.;Os assets estáticos estão em cache na borda.
+We're reducing latency for global users.;Estamos reduzindo latência para usuários globais.
+I'm purging the CDN cache.;Estou limpando o cache da CDN.
+Let's invalidate cached content.;Vamos invalidar conteúdo em cache.
+I'm configuring cache headers.;Estou configurando headers de cache.
+The content is cached for 24 hours.;O conteúdo fica em cache por 24 horas.
+We should enable gzip compression.;Devemos habilitar compressão gzip.
+I'm optimizing the payload size.;Estou otimizando o tamanho do payload.
+The bandwidth usage has decreased.;O uso de banda diminuiu.
+Let's monitor the network traffic.;Vamos monitorar o tráfego de rede.
+I'm using tcpdump to capture packets.;Estou usando tcpdump para capturar pacotes.
+The network latency is high.;A latência de rede está alta.
+We need to investigate the network path.;Precisamos investigar o caminho de rede.
+I'm running a traceroute.;Estou rodando um traceroute.
+There's packet loss on this hop.;Há perda de pacotes neste hop.
+Let's check with the network team.;Vamos verificar com o time de rede.
+I'm setting up backups.;Estou configurando backups.
+The database backup runs daily.;O backup do banco de dados roda diariamente.
+We need to test the restore procedure.;Precisamos testar o procedimento de restore.
+I'm restoring from the backup.;Estou fazendo restore do backup.
+The backup failed last night.;O backup falhou ontem à noite.
+Let's check the backup logs.;Vamos verificar os logs de backup.
+I'm configuring retention policies.;Estou configurando políticas de retenção.
+We keep backups for 30 days.;Mantemos backups por 30 dias.
+The old backups are being purged.;Os backups antigos estão sendo removidos.
+I'm setting up disaster recovery.;Estou configurando disaster recovery.
+We have a secondary region for failover.;Temos uma região secundária para failover.
+Let's test the failover procedure.;Vamos testar o procedimento de failover.
+I'm switching to the backup site.;Estou trocando para o site de backup.
+The RTO is 4 hours.;O RTO é de 4 horas.
+Our RPO is set to 15 minutes.;Nosso RPO está definido em 15 minutos.
+We need to minimize data loss.;Precisamos minimizar perda de dados.
+I'm implementing automated failover.;Estou implementando failover automatizado.

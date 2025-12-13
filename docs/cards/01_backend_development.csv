@@ -1,0 +1,202 @@
+Front;Back
+I'm implementing the new REST API endpoint.;Estou implementando o novo endpoint da REST API.
+The service layer handles the business logic.;A camada de serviço lida com a lógica de negócio.
+We need to add validation to this DTO.;Precisamos adicionar validação a este DTO.
+I'm injecting the repository using @Autowired.;Estou injetando o repositório usando @Autowired.
+The controller is returning a 500 error.;O controller está retornando um erro 500.
+Let's add exception handling to this method.;Vamos adicionar tratamento de exceção a este método.
+I'm creating a new Spring Boot application.;Estou criando uma nova aplicação Spring Boot.
+The database migration is running.;A migração do banco de dados está rodando.
+We should use @Transactional here.;Devemos usar @Transactional aqui.
+I'm writing integration tests for the API.;Estou escrevendo testes de integração para a API.
+The JPA entity mapping is incorrect.;O mapeamento da entidade JPA está incorreto.
+Let's configure the application properties.;Vamos configurar as propriedades da aplicação.
+I'm adding a new dependency to the pom.xml.;Estou adicionando uma nova dependência ao pom.xml.
+The bean is not being autowired correctly.;O bean não está sendo autowired corretamente.
+We need to implement pagination for this endpoint.;Precisamos implementar paginação para este endpoint.
+I'm creating a custom exception class.;Estou criando uma classe de exceção customizada.
+The response is being serialized to JSON.;A resposta está sendo serializada para JSON.
+Let's add logging to track the request flow.;Vamos adicionar logging para rastrear o fluxo da requisição.
+I'm implementing a Kafka consumer.;Estou implementando um consumidor Kafka.
+The message is being published to the topic.;A mensagem está sendo publicada no tópico.
+We need to handle the deserialization error.;Precisamos tratar o erro de desserialização.
+I'm configuring the connection pool.;Estou configurando o pool de conexões.
+The query is taking too long to execute.;A query está demorando muito para executar.
+Let's optimize this database query.;Vamos otimizar esta query do banco de dados.
+I'm adding an index to improve performance.;Estou adicionando um índice para melhorar a performance.
+The transaction is being rolled back.;A transação está sendo revertida.
+We should cache this result.;Devemos fazer cache deste resultado.
+I'm implementing the builder pattern.;Estou implementando o padrão builder.
+Let's use composition instead of inheritance.;Vamos usar composição ao invés de herança.
+I'm refactoring this code to follow SOLID principles.;Estou refatorando este código para seguir os princípios SOLID.
+The API contract needs to be versioned.;O contrato da API precisa ser versionado.
+I'm documenting the endpoint with Swagger.;Estou documentando o endpoint com Swagger.
+Let's add request validation using Bean Validation.;Vamos adicionar validação de requisição usando Bean Validation.
+The microservice is communicating via REST.;O microsserviço está se comunicando via REST.
+I'm implementing circuit breaker with Resilience4j.;Estou implementando circuit breaker com Resilience4j.
+We need to add retry logic here.;Precisamos adicionar lógica de retry aqui.
+The service is timing out.;O serviço está dando timeout.
+I'm configuring the HTTP client.;Estou configurando o cliente HTTP.
+Let's increase the timeout value.;Vamos aumentar o valor do timeout.
+I'm implementing asynchronous processing.;Estou implementando processamento assíncrono.
+The method is annotated with @Async.;O método está anotado com @Async.
+We should use CompletableFuture here.;Devemos usar CompletableFuture aqui.
+I'm handling the database connection leak.;Estou tratando o vazamento de conexão do banco de dados.
+The connection pool is exhausted.;O pool de conexões está esgotado.
+Let's add health checks to the application.;Vamos adicionar health checks à aplicação.
+I'm implementing the actuator endpoints.;Estou implementando os endpoints do actuator.
+The application metrics are being collected.;As métricas da aplicação estão sendo coletadas.
+I'm setting up Prometheus metrics.;Estou configurando métricas do Prometheus.
+Let's expose custom metrics.;Vamos expor métricas customizadas.
+I'm configuring the security layer.;Estou configurando a camada de segurança.
+We need to add JWT authentication.;Precisamos adicionar autenticação JWT.
+I'm implementing role-based access control.;Estou implementando controle de acesso baseado em roles.
+The token is being validated.;O token está sendo validado.
+Let's add CORS configuration.;Vamos adicionar configuração de CORS.
+I'm encrypting sensitive data.;Estou criptografando dados sensíveis.
+The password is being hashed.;A senha está sendo hasheada.
+We should use BCrypt for password hashing.;Devemos usar BCrypt para hash de senha.
+I'm implementing OAuth2 integration.;Estou implementando integração OAuth2.
+The API key is invalid.;A chave da API é inválida.
+Let's add rate limiting to prevent abuse.;Vamos adicionar rate limiting para prevenir abuso.
+I'm configuring the thread pool.;Estou configurando o pool de threads.
+The task is being executed asynchronously.;A tarefa está sendo executada assincronamente.
+We need to handle concurrent requests.;Precisamos lidar com requisições concorrentes.
+I'm using synchronized to prevent race conditions.;Estou usando synchronized para prevenir race conditions.
+Let's use atomic operations.;Vamos usar operações atômicas.
+I'm implementing a scheduled job.;Estou implementando um job agendado.
+The cron expression is configured.;A expressão cron está configurada.
+This batch process runs every hour.;Este processo batch roda a cada hora.
+I'm processing messages from the queue.;Estou processando mensagens da fila.
+The dead letter queue is receiving failed messages.;A dead letter queue está recebendo mensagens que falharam.
+Let's add a retry mechanism.;Vamos adicionar um mecanismo de retry.
+I'm implementing idempotency.;Estou implementando idempotência.
+The operation should be idempotent.;A operação deve ser idempotente.
+We need to prevent duplicate processing.;Precisamos prevenir processamento duplicado.
+I'm adding a unique constraint.;Estou adicionando uma constraint única.
+The foreign key relationship is defined.;O relacionamento de chave estrangeira está definido.
+Let's normalize this database schema.;Vamos normalizar este schema do banco de dados.
+I'm creating a database view.;Estou criando uma view do banco de dados.
+The stored procedure is being called.;A stored procedure está sendo chamada.
+We should use parameterized queries to prevent SQL injection.;Devemos usar queries parametrizadas para prevenir SQL injection.
+I'm optimizing the N+1 query problem.;Estou otimizando o problema de query N+1.
+Let's use fetch joins.;Vamos usar fetch joins.
+I'm implementing lazy loading.;Estou implementando lazy loading.
+The entity is being eagerly loaded.;A entidade está sendo carregada eagerly.
+We need to tune the JPA configuration.;Precisamos ajustar a configuração do JPA.
+I'm adding a second-level cache.;Estou adicionando um cache de segundo nível.
+The cache is being evicted.;O cache está sendo removido.
+Let's configure Redis for distributed caching.;Vamos configurar Redis para cache distribuído.
+I'm implementing a cache-aside pattern.;Estou implementando um padrão cache-aside.
+The cache hit ratio is low.;A taxa de acerto do cache está baixa.
+We should increase the cache size.;Devemos aumentar o tamanho do cache.
+I'm adding monitoring to track cache performance.;Estou adicionando monitoramento para rastrear a performance do cache.
+The application is running in debug mode.;A aplicação está rodando em modo debug.
+Let's set breakpoints to investigate.;Vamos definir breakpoints para investigar.
+I'm inspecting the variable values.;Estou inspecionando os valores das variáveis.
+The stack trace shows the error origin.;O stack trace mostra a origem do erro.
+I'm analyzing the heap dump.;Estou analisando o heap dump.
+There's a memory leak in the application.;Há um vazamento de memória na aplicação.
+Let's profile the application to find bottlenecks.;Vamos fazer profiling da aplicação para encontrar gargalos.
+I'm using VisualVM to monitor the JVM.;Estou usando VisualVM para monitorar a JVM.
+The garbage collection is causing pauses.;A coleta de lixo está causando pausas.
+We need to tune the JVM parameters.;Precisamos ajustar os parâmetros da JVM.
+I'm increasing the heap size.;Estou aumentando o tamanho do heap.
+Let's use G1GC instead of CMS.;Vamos usar G1GC ao invés de CMS.
+I'm analyzing the thread dump.;Estou analisando o thread dump.
+There's a deadlock between these threads.;Há um deadlock entre essas threads.
+The application is hanging.;A aplicação está travada.
+I'm investigating the root cause.;Estou investigando a causa raiz.
+Let's add more detailed logging.;Vamos adicionar logging mais detalhado.
+I'm changing the log level to DEBUG.;Estou mudando o nível de log para DEBUG.
+The logs are being written to a file.;Os logs estão sendo escritos em um arquivo.
+We should use structured logging.;Devemos usar logging estruturado.
+I'm adding MDC context to the logs.;Estou adicionando contexto MDC aos logs.
+Let's centralize logs using ELK stack.;Vamos centralizar logs usando stack ELK.
+I'm shipping logs to Elasticsearch.;Estou enviando logs para o Elasticsearch.
+The log rotation is configured.;A rotação de logs está configurada.
+We're running out of disk space due to logs.;Estamos ficando sem espaço em disco devido aos logs.
+I'm implementing log retention policies.;Estou implementando políticas de retenção de logs.
+Let's add correlation IDs to track requests.;Vamos adicionar IDs de correlação para rastrear requisições.
+I'm tracing the request across microservices.;Estou rastreando a requisição entre microsserviços.
+The distributed tracing is set up with Jaeger.;O tracing distribuído está configurado com Jaeger.
+I'm analyzing the trace spans.;Estou analisando os spans do trace.
+The latency is high in this service.;A latência está alta neste serviço.
+Let's identify the slow operation.;Vamos identificar a operação lenta.
+I'm implementing API versioning.;Estou implementando versionamento de API.
+This is a breaking change.;Esta é uma mudança que quebra compatibilidade.
+We need to maintain backward compatibility.;Precisamos manter compatibilidade retroativa.
+I'm deprecating this old endpoint.;Estou depreciando este endpoint antigo.
+Let's communicate the API changes to clients.;Vamos comunicar as mudanças da API aos clientes.
+I'm writing API documentation.;Estou escrevendo documentação da API.
+The OpenAPI spec is up to date.;A especificação OpenAPI está atualizada.
+We should add examples to the documentation.;Devemos adicionar exemplos à documentação.
+I'm testing the API with Postman.;Estou testando a API com Postman.
+Let's create a collection for the endpoints.;Vamos criar uma coleção para os endpoints.
+I'm mocking the external service.;Estou mockando o serviço externo.
+The test is using WireMock.;O teste está usando WireMock.
+We need to stub the response.;Precisamos criar um stub da resposta.
+I'm writing unit tests with JUnit.;Estou escrevendo testes unitários com JUnit.
+The test coverage is below 80%.;A cobertura de testes está abaixo de 80%.
+Let's increase the code coverage.;Vamos aumentar a cobertura de código.
+I'm using Mockito to mock dependencies.;Estou usando Mockito para mockar dependências.
+The test is failing intermittently.;O teste está falhando intermitentemente.
+This is a flaky test.;Este é um teste instável.
+We need to make the test more reliable.;Precisamos tornar o teste mais confiável.
+I'm using TestContainers for integration tests.;Estou usando TestContainers para testes de integração.
+The database container is starting.;O container do banco de dados está iniciando.
+Let's run the tests in isolation.;Vamos rodar os testes isoladamente.
+I'm cleaning up test data.;Estou limpando dados de teste.
+The test setup is complex.;A configuração do teste é complexa.
+We should simplify the test fixtures.;Devemos simplificar as fixtures de teste.
+I'm using test builders for test data.;Estou usando builders de teste para dados de teste.
+Let's follow the AAA pattern: Arrange, Act, Assert.;Vamos seguir o padrão AAA: Arrange, Act, Assert.
+I'm writing parameterized tests.;Estou escrevendo testes parametrizados.
+The test suite takes too long to run.;A suite de testes demora muito para rodar.
+We need to parallelize the tests.;Precisamos paralelizar os testes.
+I'm running tests in parallel.;Estou rodando testes em paralelo.
+Let's split tests across multiple jobs.;Vamos dividir testes em múltiplos jobs.
+I'm implementing contract testing.;Estou implementando testes de contrato.
+The consumer contract is defined.;O contrato do consumidor está definido.
+We're using Pact for contract tests.;Estamos usando Pact para testes de contrato.
+I'm verifying the provider contract.;Estou verificando o contrato do provedor.
+The API schema validation is failing.;A validação do schema da API está falhando.
+Let's ensure the response matches the schema.;Vamos garantir que a resposta corresponde ao schema.
+I'm implementing chaos engineering tests.;Estou implementando testes de engenharia do caos.
+We're simulating failures to test resilience.;Estamos simulando falhas para testar resiliência.
+I'm injecting latency to test timeouts.;Estou injetando latência para testar timeouts.
+The application recovered gracefully.;A aplicação se recuperou de forma elegante.
+Let's test the fallback mechanism.;Vamos testar o mecanismo de fallback.
+I'm implementing feature flags.;Estou implementando feature flags.
+The feature is behind a toggle.;A funcionalidade está atrás de um toggle.
+Let's enable the feature for beta users.;Vamos habilitar a funcionalidade para usuários beta.
+I'm doing a gradual rollout.;Estou fazendo um rollout gradual.
+The canary deployment is live.;O deployment canary está ativo.
+We're monitoring the canary metrics.;Estamos monitorando as métricas do canary.
+The error rate increased after the deploy.;A taxa de erro aumentou após o deploy.
+Let's roll back the canary.;Vamos fazer rollback do canary.
+I'm implementing blue-green deployment.;Estou implementando deployment blue-green.
+The blue environment is active.;O ambiente blue está ativo.
+We're routing traffic to the green environment.;Estamos roteando tráfego para o ambiente green.
+Let's switch the traffic back.;Vamos trocar o tráfego de volta.
+I'm configuring the load balancer.;Estou configurando o load balancer.
+The traffic is being distributed evenly.;O tráfego está sendo distribuído uniformemente.
+We need to add a new server to the pool.;Precisamos adicionar um novo servidor ao pool.
+I'm draining connections from this server.;Estou drenando conexões deste servidor.
+The server is being removed from rotation.;O servidor está sendo removido da rotação.
+Let's add health checks to the load balancer.;Vamos adicionar health checks ao load balancer.
+I'm implementing sticky sessions.;Estou implementando sessões fixas.
+The session affinity is configured.;A afinidade de sessão está configurada.
+We should use session replication.;Devemos usar replicação de sessão.
+I'm storing sessions in Redis.;Estou armazenando sessões no Redis.
+The session is being shared across instances.;A sessão está sendo compartilhada entre instâncias.
+Let's implement stateless authentication.;Vamos implementar autenticação stateless.
+I'm using JWT for session management.;Estou usando JWT para gerenciamento de sessão.
+The token expiration is set to 1 hour.;A expiração do token está configurada para 1 hora.
+We need to implement token refresh.;Precisamos implementar refresh de token.
+I'm adding a refresh token endpoint.;Estou adicionando um endpoint de refresh token.
+The refresh token is stored securely.;O refresh token está armazenado de forma segura.
+Let's rotate the tokens periodically.;Vamos rotacionar os tokens periodicamente.
+I'm implementing token revocation.;Estou implementando revogação de token.
+The user's tokens have been invalidated.;Os tokens do usuário foram invalidados.
+We need to force users to re-authenticate.;Precisamos forçar usuários a re-autenticar.

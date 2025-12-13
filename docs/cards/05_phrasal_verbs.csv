@@ -1,0 +1,118 @@
+Front;Back
+Let's set up the development environment.;Vamos configurar o ambiente de desenvolvimento.
+I need to set up my local database.;Preciso configurar meu banco de dados local.
+We're rolling out the new feature.;Estamos lançando a nova funcionalidade.
+The deployment is rolling out gradually.;O deployment está sendo lançado gradualmente.
+Let's roll back to the previous version.;Vamos reverter para a versão anterior.
+We need to roll back the changes.;Precisamos reverter as mudanças.
+I'm looking into this issue.;Estou investigando este problema.
+Can you look into why it's failing?;Você pode investigar por que está falhando?
+Let me figure out what's wrong.;Deixa eu descobrir o que está errado.
+I can't figure out this bug.;Não consigo descobrir este bug.
+We need to break down this large task.;Precisamos dividir esta tarefa grande.
+Let's break it down into smaller pieces.;Vamos dividir em pedaços menores.
+The service went down at 3 AM.;O serviço caiu às 3h da manhã.
+The database went down unexpectedly.;O banco de dados caiu inesperadamente.
+Let's bring up the server.;Vamos subir o servidor.
+I'm bringing up the containers.;Estou subindo os containers.
+We need to scale up the infrastructure.;Precisamos escalar a infraestrutura.
+Let's scale up to handle more traffic.;Vamos escalar para lidar com mais tráfego.
+We should scale down during off-peak hours.;Devemos reduzir escala durante horários de baixa demanda.
+Let's scale down to save costs.;Vamos reduzir escala para economizar custos.
+I'm working on implementing the API.;Estou trabalhando na implementação da API.
+What are you working on?;No que você está trabalhando?
+Let me look over the code.;Deixa eu revisar o código.
+Can you look over my changes?;Você pode revisar minhas mudanças?
+I need to catch up on the latest changes.;Preciso me atualizar nas últimas mudanças.
+Let me catch up on what I missed.;Deixa eu me atualizar no que perdi.
+We need to follow up on this ticket.;Precisamos dar seguimento neste ticket.
+I'll follow up with the client.;Vou dar seguimento com o cliente.
+Let's bring in the security team.;Vamos trazer o time de segurança.
+We should bring in an expert.;Devemos trazer um especialista.
+The system is acting up again.;O sistema está agindo estranhamente de novo.
+The API is acting up.;A API está agindo estranhamente.
+Let me point out a potential issue.;Deixa eu apontar um problema potencial.
+Can you point out what needs fixing?;Você pode apontar o que precisa ser corrigido?
+We ran into some problems.;Encontramos alguns problemas.
+I ran into an error during deployment.;Encontrei um erro durante o deployment.
+Let's carry on with the implementation.;Vamos continuar com a implementação.
+We should carry on despite the setback.;Devemos continuar apesar do revés.
+I'll get back to you with an answer.;Vou te retornar com uma resposta.
+Let me get back to you on this.;Deixa eu te retornar sobre isso.
+We need to track down the source of the bug.;Precisamos rastrear a fonte do bug.
+I'm trying to track down the memory leak.;Estou tentando rastrear o vazamento de memória.
+Let's narrow down the cause.;Vamos reduzir as possíveis causas.
+We need to narrow down the suspects.;Precisamos reduzir os suspeitos.
+Can you back up the database?;Você pode fazer backup do banco de dados?
+I'm backing up the data before the migration.;Estou fazendo backup dos dados antes da migração.
+Let's hold off on this feature.;Vamos adiar esta funcionalidade.
+We should hold off until we have more info.;Devemos adiar até termos mais informação.
+The tests are running.;Os testes estão rodando.
+How long will the build take to run?;Quanto tempo o build vai levar para rodar?
+Let me run through the requirements.;Deixa eu passar pelos requisitos.
+Can we run through the demo?;Podemos passar pela demo?
+I need to go over the documentation.;Preciso revisar a documentação.
+Let's go over the code together.;Vamos revisar o código juntos.
+We should go through the logs.;Devemos passar pelos logs.
+I'll go through the error messages.;Vou passar pelas mensagens de erro.
+Let's wrap up this meeting.;Vamos encerrar esta reunião.
+We need to wrap up by 5 PM.;Precisamos encerrar até às 17h.
+I'll look up the documentation.;Vou procurar a documentação.
+Let me look up the API reference.;Deixa eu procurar a referência da API.
+The server shut down unexpectedly.;O servidor desligou inesperadamente.
+We need to shut down for maintenance.;Precisamos desligar para manutenção.
+Let's start up the application.;Vamos iniciar a aplicação.
+The service is starting up.;O serviço está iniciando.
+I'll check out the latest code.;Vou fazer checkout do código mais recente.
+Let me check out that branch.;Deixa eu fazer checkout daquele branch.
+We need to check in our changes.;Precisamos fazer check-in das nossas mudanças.
+Did you check in the code?;Você fez check-in do código?
+Let's clean up the codebase.;Vamos limpar a base de código.
+I'm cleaning up the old files.;Estou limpando os arquivos antigos.
+We need to sort out this dependency issue.;Precisamos resolver este problema de dependência.
+Let me sort out the configuration.;Deixa eu resolver a configuração.
+I'll reach out to the API team.;Vou entrar em contato com o time da API.
+Let's reach out for help.;Vamos procurar ajuda.
+The deployment is taking off now.;O deployment está decolando agora.
+The project is really taking off.;O projeto está realmente decolando.
+Let's cut down on technical debt.;Vamos reduzir a dívida técnica.
+We need to cut down the build time.;Precisamos reduzir o tempo de build.
+The application is slowing down.;A aplicação está ficando lenta.
+Performance is slowing down under load.;A performance está ficando lenta sob carga.
+Let's speed up the query.;Vamos acelerar a query.
+We can speed up by using caching.;Podemos acelerar usando cache.
+The issue keeps coming up.;O problema continua surgindo.
+This error keeps coming up in production.;Este erro continua surgindo em produção.
+I'll write up the findings.;Vou escrever os achados.
+Can you write up the solution?;Você pode escrever a solução?
+Let's close out this sprint.;Vamos encerrar esta sprint.
+We're closing out the quarter.;Estamos encerrando o trimestre.
+I need to follow through on this task.;Preciso dar continuidade a esta tarefa.
+Make sure to follow through with the fix.;Certifique-se de dar continuidade à correção.
+The system is acting up under high load.;O sistema está agindo estranhamente sob alta carga.
+Things are looking up now.;As coisas estão melhorando agora.
+Performance is looking up after the optimization.;A performance está melhorando após a otimização.
+Let's drill down into the metrics.;Vamos aprofundar nas métricas.
+We need to drill down to find the root cause.;Precisamos aprofundar para encontrar a causa raiz.
+I'll circle back on this tomorrow.;Vou voltar nisso amanhã.
+Let's circle back after the meeting.;Vamos voltar nisso depois da reunião.
+We need to hash out the details.;Precisamos discutir os detalhes.
+Let's hash out the implementation plan.;Vamos discutir o plano de implementação.
+I'm ironing out the bugs.;Estou resolvendo os bugs.
+We need to iron out these issues.;Precisamos resolver esses problemas.
+The feature is shaping up nicely.;A funcionalidade está tomando forma bem.
+The project is shaping up.;O projeto está tomando forma.
+Let's firm up the requirements.;Vamos solidificar os requisitos.
+We need to firm up the timeline.;Precisamos solidificar a linha do tempo.
+I'll touch base with the team.;Vou me conectar com o time.
+Let's touch base next week.;Vamos nos conectar semana que vem.
+We need to beef up security.;Precisamos reforçar a segurança.
+Let's beef up the error handling.;Vamos reforçar o tratamento de erros.
+The system is holding up well.;O sistema está aguentando bem.
+How is the server holding up?;Como o servidor está aguentando?
+Let's phase out the old API.;Vamos descontinuar a API antiga gradualmente.
+We're phasing out support for IE11.;Estamos descontinuando suporte para IE11 gradualmente.
+I'll put together a proposal.;Vou montar uma proposta.
+Can you put together the documentation?;Você pode montar a documentação?
+Let's chalk it up to experience.;Vamos colocar na conta da experiência.
+We can chalk this up as a learning.;Podemos colocar isso como um aprendizado.

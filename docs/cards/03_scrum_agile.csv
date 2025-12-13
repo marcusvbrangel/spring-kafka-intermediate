@@ -1,0 +1,196 @@
+Front;Back
+What did you work on yesterday?;No que você trabalhou ontem?
+What are you planning to do today?;O que você está planejando fazer hoje?
+Do you have any blockers?;Você tem algum impedimento?
+I'm blocked waiting for code review.;Estou bloqueado esperando code review.
+Can you give us a quick update?;Pode nos dar um update rápido?
+I'm on track to finish by end of sprint.;Estou no caminho certo para terminar até o fim da sprint.
+I'm running behind schedule.;Estou atrasado no cronograma.
+I need help with this task.;Preciso de ajuda com esta tarefa.
+Let's sync after the standup.;Vamos nos alinhar depois do standup.
+I'm progressing as planned.;Estou progredindo conforme planejado.
+This is taking longer than expected.;Isso está demorando mais do que esperado.
+I'll pair with you on this.;Vou fazer pair com você nisso.
+Let's discuss this offline.;Vamos discutir isso offline.
+I'm waiting for the design team.;Estou esperando o time de design.
+The QA team is testing my changes.;O time de QA está testando minhas mudanças.
+Let's refine this user story.;Vamos refinar esta user story.
+The acceptance criteria are not clear.;Os critérios de aceite não estão claros.
+We need to break this story down.;Precisamos quebrar esta história.
+This story is too large.;Esta história é muito grande.
+Let's split it into smaller stories.;Vamos dividi-la em histórias menores.
+What's the definition of done?;Qual é a definição de pronto?
+The story doesn't meet the DoD.;A história não atende a DoD.
+We need to add more details.;Precisamos adicionar mais detalhes.
+The estimate for this is 5 story points.;A estimativa para isso é 5 story points.
+I think this is an 8.;Eu acho que isso é um 8.
+Let's use planning poker.;Vamos usar planning poker.
+We all need to agree on the estimate.;Todos precisamos concordar com a estimativa.
+This is more complex than we thought.;Isso é mais complexo do que pensávamos.
+Let's re-estimate this story.;Vamos re-estimar esta história.
+The velocity for this sprint is 45 points.;A velocidade para esta sprint é 45 pontos.
+We committed to 40 story points.;Nos comprometemos com 40 story points.
+Can we take on more work?;Podemos assumir mais trabalho?
+We're at capacity for this sprint.;Estamos na capacidade máxima para esta sprint.
+Let's pull this from the backlog.;Vamos puxar isso do backlog.
+This should be prioritized.;Isso deve ser priorizado.
+The product owner will decide.;O product owner vai decidir.
+What's the business value?;Qual é o valor de negócio?
+This is a high priority item.;Este é um item de alta prioridade.
+Let's move this to the top of the backlog.;Vamos mover isso para o topo do backlog.
+We need to groom the backlog.;Precisamos fazer grooming do backlog.
+The backlog is getting too large.;O backlog está ficando muito grande.
+Let's archive old stories.;Vamos arquivar histórias antigas.
+This epic is not well defined.;Este épico não está bem definido.
+We need to decompose the epic.;Precisamos decompor o épico.
+Let's create sub-tasks for this story.;Vamos criar sub-tarefas para esta história.
+I'm moving this to in progress.;Estou movendo isso para em progresso.
+The task is done.;A tarefa está pronta.
+Let's move it to the review column.;Vamos mover para a coluna de revisão.
+It's ready for QA.;Está pronto para QA.
+The story is blocked.;A história está bloqueada.
+We need to remove the impediment.;Precisamos remover o impedimento.
+I'll escalate this to management.;Vou escalar isso para a gestão.
+Let's schedule sprint planning.;Vamos agendar o planejamento da sprint.
+The sprint starts next Monday.;A sprint começa na próxima segunda.
+We're in the middle of sprint 15.;Estamos no meio da sprint 15.
+How many sprints until the release?;Quantas sprints até o release?
+The sprint goal is to complete the login feature.;O objetivo da sprint é completar a funcionalidade de login.
+Are we on track to meet the sprint goal?;Estamos no caminho certo para atingir o objetivo da sprint?
+Let's focus on the sprint commitment.;Vamos focar no compromisso da sprint.
+We can't add new work mid-sprint.;Não podemos adicionar novo trabalho no meio da sprint.
+This is scope creep.;Isso é scope creep.
+We agreed not to change scope.;Concordamos em não mudar o escopo.
+Can we defer this to the next sprint?;Podemos adiar isso para a próxima sprint?
+Let's add it to the product backlog.;Vamos adicionar ao product backlog.
+The sprint review is on Friday.;A revisão da sprint é na sexta.
+Let's prepare the demo.;Vamos preparar a demo.
+Who will present this feature?;Quem vai apresentar esta funcionalidade?
+I'll demo the new dashboard.;Vou demonstrar o novo dashboard.
+Here's what we delivered this sprint.;Aqui está o que entregamos nesta sprint.
+We completed 38 out of 40 story points.;Completamos 38 de 40 story points.
+These two stories were carried over.;Essas duas histórias foram transferidas.
+We didn't finish everything we committed to.;Não terminamos tudo que nos comprometemos.
+Let's discuss what went wrong.;Vamos discutir o que deu errado.
+The stakeholders are happy with the progress.;Os stakeholders estão felizes com o progresso.
+We received good feedback.;Recebemos bom feedback.
+Let's incorporate the feedback.;Vamos incorporar o feedback.
+The retrospective is scheduled for tomorrow.;A retrospectiva está agendada para amanhã.
+What went well this sprint?;O que funcionou bem nesta sprint?
+What didn't go well?;O que não funcionou bem?
+What can we improve?;O que podemos melhorar?
+Let's create action items.;Vamos criar itens de ação.
+Who will own this action item?;Quem vai assumir este item de ação?
+I'll take ownership of this.;Eu assumo isso.
+Let's follow up on the action items from last retro.;Vamos acompanhar os itens de ação da última retro.
+Did we complete the action items?;Completamos os itens de ação?
+We need to improve our code review process.;Precisamos melhorar nosso processo de code review.
+The team communication has improved.;A comunicação do time melhorou.
+We should keep doing this.;Devemos continuar fazendo isso.
+Let's stop doing this practice.;Vamos parar de fazer essa prática.
+We should start doing pair programming more.;Devemos começar a fazer mais pair programming.
+The team morale is high.;O moral do time está alto.
+Everyone is engaged.;Todo mundo está engajado.
+We're working well together.;Estamos trabalhando bem juntos.
+There's good collaboration.;Há boa colaboração.
+Let's celebrate our wins.;Vamos celebrar nossas vitórias.
+We achieved our sprint goal.;Alcançamos nosso objetivo da sprint.
+The product owner is satisfied.;O product owner está satisfeito.
+The customer is happy.;O cliente está feliz.
+We're delivering value.;Estamos entregando valor.
+Let's maintain this momentum.;Vamos manter esse momentum.
+The daily standup is at 9 AM.;O daily standup é às 9h.
+Let's keep it under 15 minutes.;Vamos manter em menos de 15 minutos.
+Please be on time.;Por favor, sejam pontuais.
+We're waiting for everyone to join.;Estamos esperando todo mundo entrar.
+Let's start the standup.;Vamos começar o standup.
+Who wants to go first?;Quem quer começar?
+I'll go next.;Eu vou em seguida.
+That's all from me.;É tudo de mim.
+Thanks for the update.;Obrigado pelo update.
+Let's move on to the next person.;Vamos passar para a próxima pessoa.
+Any other blockers to discuss?;Algum outro impedimento para discutir?
+That's it for today's standup.;É isso para o standup de hoje.
+Let's get back to work.;Vamos voltar ao trabalho.
+The sprint ends tomorrow.;A sprint termina amanhã.
+We need to wrap up these stories.;Precisamos finalizar essas histórias.
+Can you finish this today?;Você consegue terminar isso hoje?
+I'll work extra hours to complete it.;Vou trabalhar horas extras para completar.
+Let's aim for substantial completion.;Vamos mirar conclusão substancial.
+We can finish the polish next sprint.;Podemos terminar o polimento na próxima sprint.
+This is a spike story.;Esta é uma história de spike.
+We need to investigate the technical approach.;Precisamos investigar a abordagem técnica.
+The spike will help us estimate better.;O spike vai nos ajudar a estimar melhor.
+Let's timebox the spike to 2 days.;Vamos limitar o spike a 2 dias.
+What did we learn from the spike?;O que aprendemos com o spike?
+Now we can estimate the actual work.;Agora podemos estimar o trabalho real.
+This is a technical debt story.;Esta é uma história de dívida técnica.
+We should allocate time for tech debt.;Devemos alocar tempo para dívida técnica.
+Let's dedicate 20% of the sprint to tech debt.;Vamos dedicar 20% da sprint à dívida técnica.
+The code quality is deteriorating.;A qualidade do código está se deteriorando.
+We need to refactor this module.;Precisamos refatorar este módulo.
+Let's add tests to improve coverage.;Vamos adicionar testes para melhorar cobertura.
+This is a bug fix.;Isso é uma correção de bug.
+The bug was reported by QA.;O bug foi reportado pelo QA.
+What's the severity?;Qual é a severidade?
+This is a critical bug.;Este é um bug crítico.
+We need to fix this ASAP.;Precisamos corrigir isso ASAP.
+Let's create a hotfix.;Vamos criar um hotfix.
+Can we deploy the fix today?;Podemos fazer deploy da correção hoje?
+The fix is ready for testing.;A correção está pronta para teste.
+QA verified the fix.;QA verificou a correção.
+The bug is resolved.;O bug está resolvido.
+Let's close the ticket.;Vamos fechar o ticket.
+This is a new feature request.;Esta é uma nova solicitação de funcionalidade.
+The customer requested this enhancement.;O cliente solicitou esta melhoria.
+Let's add it to the backlog.;Vamos adicionar ao backlog.
+We'll consider it for a future sprint.;Vamos considerar para uma sprint futura.
+The product roadmap shows our direction.;O roadmap do produto mostra nossa direção.
+We're working towards the Q2 release.;Estamos trabalhando para o release de Q2.
+The release date is June 30th.;A data de release é 30 de junho.
+Are we on schedule?;Estamos no cronograma?
+We might need to descope some features.;Talvez precisemos reduzir o escopo de algumas funcionalidades.
+Let's negotiate the scope with stakeholders.;Vamos negociar o escopo com stakeholders.
+The MVP needs these core features.;O MVP precisa dessas funcionalidades principais.
+Everything else is nice to have.;Todo o resto é bom ter.
+Let's focus on the must-haves.;Vamos focar nos indispensáveis.
+We can add the nice-to-haves later.;Podemos adicionar os bom-ter depois.
+The definition of ready ensures stories are prepared.;A definição de pronto garante que histórias estão preparadas.
+This story is not ready for development.;Esta história não está pronta para desenvolvimento.
+We need more information.;Precisamos de mais informação.
+Let's clarify the requirements.;Vamos clarificar os requisitos.
+The user story format is: As a... I want... So that...;O formato de user story é: Como um... Eu quero... Para que...
+Let's write this from the user's perspective.;Vamos escrever isso da perspectiva do usuário.
+The story should deliver value to the user.;A história deve entregar valor ao usuário.
+Why are we building this?;Por que estamos construindo isso?
+What problem are we solving?;Que problema estamos resolvendo?
+How will we measure success?;Como vamos medir sucesso?
+Let's define the success metrics.;Vamos definir as métricas de sucesso.
+The feature usage will be tracked.;O uso da funcionalidade será rastreado.
+We'll monitor user engagement.;Vamos monitorar engajamento do usuário.
+Let's run an A/B test.;Vamos rodar um teste A/B.
+We're iterating based on user feedback.;Estamos iterando baseado no feedback do usuário.
+The team follows Scrum framework.;O time segue o framework Scrum.
+We have daily standups, sprint planning, review, and retro.;Temos daily standups, planejamento de sprint, revisão e retro.
+The Scrum Master facilitates the ceremonies.;O Scrum Master facilita as cerimônias.
+The Product Owner manages the backlog.;O Product Owner gerencia o backlog.
+The Development Team is self-organizing.;O Time de Desenvolvimento é auto-organizado.
+We're cross-functional.;Somos cross-funcionais.
+Everyone can contribute to different areas.;Todo mundo pode contribuir em diferentes áreas.
+We value individuals and interactions.;Valorizamos indivíduos e interações.
+Working software over comprehensive documentation.;Software funcionando sobre documentação abrangente.
+Customer collaboration over contract negotiation.;Colaboração com cliente sobre negociação de contrato.
+Responding to change over following a plan.;Responder a mudanças sobre seguir um plano.
+We embrace agile values.;Abraçamos valores ágeis.
+Continuous improvement is our goal.;Melhoria contínua é nosso objetivo.
+We inspect and adapt.;Inspecionamos e adaptamos.
+Let's be transparent about our progress.;Vamos ser transparentes sobre nosso progresso.
+The burndown chart shows remaining work.;O gráfico burndown mostra trabalho restante.
+We're trending above the ideal line.;Estamos tendendo acima da linha ideal.
+We need to pick up the pace.;Precisamos acelerar o ritmo.
+The team capacity is reduced this sprint.;A capacidade do time está reduzida nesta sprint.
+Two team members are on vacation.;Dois membros do time estão de férias.
+Let's adjust our commitment.;Vamos ajustar nosso compromisso.
+We should be realistic about what we can deliver.;Devemos ser realistas sobre o que podemos entregar.
+Underpromise and overdeliver.;Prometer menos e entregar mais.
+Let's set achievable goals.;Vamos definir objetivos alcançáveis.

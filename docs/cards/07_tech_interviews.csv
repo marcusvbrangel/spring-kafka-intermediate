@@ -1,0 +1,519 @@
+Front;Back
+Tell me about yourself.;Fale-me sobre você.
+Walk me through your resume.;Me guie pelo seu currículo.
+Why are you interested in this position?;Por que você está interessado nesta posição?
+Why do you want to work here?;Por que você quer trabalhar aqui?
+What do you know about our company?;O que você sabe sobre nossa empresa?
+What interests you about this role?;O que te interessa neste cargo?
+What are your career goals?;Quais são seus objetivos de carreira?
+Where do you see yourself in 5 years?;Onde você se vê em 5 anos?
+What are your salary expectations?;Quais são suas expectativas salariais?
+When can you start?;Quando você pode começar?
+Why are you leaving your current job?;Por que você está saindo do seu emprego atual?
+What's your notice period?;Qual é seu período de aviso prévio?
+Tell me about a challenging project you worked on.;Fale-me sobre um projeto desafiador em que trabalhou.
+Describe a time you faced a difficult problem.;Descreva uma vez que enfrentou um problema difícil.
+How did you solve it?;Como você resolveu?
+What was your approach?;Qual foi sua abordagem?
+Can you walk me through your thought process?;Você pode me guiar pelo seu processo de pensamento?
+What would you do differently?;O que você faria de diferente?
+Tell me about a time you failed.;Fale-me sobre uma vez que você falhou.
+What did you learn from that experience?;O que você aprendeu com essa experiência?
+Describe a conflict you had with a teammate.;Descreva um conflito que teve com um colega de equipe.
+How do you handle disagreements?;Como você lida com discordâncias?
+Tell me about a time you showed leadership.;Fale-me sobre uma vez que demonstrou liderança.
+Have you ever mentored someone?;Você já mentorou alguém?
+Describe your leadership style.;Descreva seu estilo de liderança.
+How do you prioritize tasks?;Como você prioriza tarefas?
+Tell me about a time you had to meet a tight deadline.;Fale-me sobre uma vez que teve que cumprir um prazo apertado.
+How do you handle pressure?;Como você lida com pressão?
+What motivates you?;O que te motiva?
+What's your greatest strength?;Qual é sua maior força?
+What's your biggest weakness?;Qual é sua maior fraqueza?
+How do you stay updated with technology?;Como você se mantém atualizado com tecnologia?
+What technical blogs do you follow?;Quais blogs técnicos você segue?
+What was the last tech book you read?;Qual foi o último livro técnico que você leu?
+Do you contribute to open source?;Você contribui para open source?
+Do you have any side projects?;Você tem algum projeto pessoal?
+Tell me about your personal projects.;Fale-me sobre seus projetos pessoais.
+What technologies are you passionate about?;Quais tecnologias você é apaixonado?
+What's your experience with Java?;Qual é sua experiência com Java?
+How long have you been working with Spring?;Há quanto tempo você trabalha com Spring?
+Are you familiar with microservices?;Você está familiarizado com microsserviços?
+Have you worked with Docker?;Você já trabalhou com Docker?
+What's your experience with Kubernetes?;Qual é sua experiência com Kubernetes?
+Have you used AWS or other cloud platforms?;Você já usou AWS ou outras plataformas cloud?
+Tell me about your database experience.;Fale-me sobre sua experiência com banco de dados.
+SQL or NoSQL - which do you prefer?;SQL ou NoSQL - qual você prefere?
+What design patterns are you familiar with?;Quais padrões de design você conhece?
+Can you explain the Singleton pattern?;Você pode explicar o padrão Singleton?
+What is dependency injection?;O que é injeção de dependência?
+Explain the difference between abstract class and interface.;Explique a diferença entre classe abstrata e interface.
+What are the SOLID principles?;Quais são os princípios SOLID?
+Can you explain the Single Responsibility Principle?;Você pode explicar o Princípio da Responsabilidade Única?
+What is polymorphism?;O que é polimorfismo?
+Explain inheritance in Java.;Explique herança em Java.
+What is encapsulation?;O que é encapsulamento?
+What are Java collections?;O que são coleções Java?
+Difference between ArrayList and LinkedList?;Diferença entre ArrayList e LinkedList?
+What is a HashMap?;O que é um HashMap?
+How does a HashMap work internally?;Como um HashMap funciona internamente?
+What is the difference between HashMap and HashTable?;Qual é a diferença entre HashMap e HashTable?
+Explain multithreading in Java.;Explique multithreading em Java.
+What is a thread pool?;O que é um pool de threads?
+What is synchronization?;O que é sincronização?
+What are volatile variables?;O que são variáveis volatile?
+Explain the producer-consumer problem.;Explique o problema produtor-consumidor.
+What is a deadlock?;O que é um deadlock?
+How do you prevent deadlocks?;Como você previne deadlocks?
+What is REST?;O que é REST?
+What are RESTful principles?;Quais são os princípios RESTful?
+What are HTTP methods?;Quais são os métodos HTTP?
+Difference between PUT and POST?;Diferença entre PUT e POST?
+What is idempotency?;O que é idempotência?
+What are HTTP status codes?;O que são códigos de status HTTP?
+What does 404 mean?;O que significa 404?
+What's the difference between 401 and 403?;Qual é a diferença entre 401 e 403?
+What is JWT?;O que é JWT?
+How does authentication work?;Como funciona autenticação?
+What's the difference between authentication and authorization?;Qual é a diferença entre autenticação e autorização?
+What is OAuth?;O que é OAuth?
+Have you implemented security in APIs?;Você já implementou segurança em APIs?
+What is SQL injection?;O que é SQL injection?
+How do you prevent SQL injection?;Como você previne SQL injection?
+What is XSS?;O que é XSS?
+What is CSRF?;O que é CSRF?
+How do you secure a REST API?;Como você protege uma REST API?
+What is CORS?;O que é CORS?
+What is a transaction?;O que é uma transação?
+What are ACID properties?;Quais são as propriedades ACID?
+What is normalization?;O que é normalização?
+What is an index in databases?;O que é um índice em bancos de dados?
+When should you use indexes?;Quando você deve usar índices?
+What is a primary key?;O que é uma chave primária?
+What is a foreign key?;O que é uma chave estrangeira?
+What is a join?;O que é um join?
+Types of joins in SQL?;Tipos de joins em SQL?
+What is the N+1 query problem?;O que é o problema de query N+1?
+How do you optimize database queries?;Como você otimiza queries de banco de dados?
+What is caching?;O que é cache?
+What caching strategies do you know?;Quais estratégias de cache você conhece?
+What is Redis?;O que é Redis?
+Have you used message queues?;Você já usou filas de mensagem?
+What is Kafka?;O que é Kafka?
+What is eventual consistency?;O que é consistência eventual?
+What is CAP theorem?;O que é o teorema CAP?
+Explain microservices architecture.;Explique arquitetura de microsserviços.
+What are the advantages of microservices?;Quais são as vantagens de microsserviços?
+What are the challenges of microservices?;Quais são os desafios de microsserviços?
+How do microservices communicate?;Como microsserviços se comunicam?
+What is service discovery?;O que é service discovery?
+What is an API gateway?;O que é um API gateway?
+What is load balancing?;O que é balanceamento de carga?
+What is horizontal scaling?;O que é escalamento horizontal?
+What is vertical scaling?;O que é escalamento vertical?
+What is the difference?;Qual é a diferença?
+What is CI/CD?;O que é CI/CD?
+What is continuous integration?;O que é integração contínua?
+What is continuous deployment?;O que é deployment contínuo?
+Have you set up CI/CD pipelines?;Você já configurou pipelines de CI/CD?
+What is Docker?;O que é Docker?
+What is a container?;O que é um container?
+What's the difference between containers and VMs?;Qual é a diferença entre containers e VMs?
+What is Kubernetes?;O que é Kubernetes?
+What is a pod in Kubernetes?;O que é um pod no Kubernetes?
+What is container orchestration?;O que é orquestração de containers?
+What is infrastructure as code?;O que é infraestrutura como código?
+Have you used Terraform?;Você já usou Terraform?
+What is Git?;O que é Git?
+What is version control?;O que é controle de versão?
+What is a merge conflict?;O que é um conflito de merge?
+How do you resolve merge conflicts?;Como você resolve conflitos de merge?
+What is rebasing?;O que é rebasing?
+Difference between merge and rebase?;Diferença entre merge e rebase?
+What is a pull request?;O que é um pull request?
+What is code review?;O que é revisão de código?
+Why is code review important?;Por que revisão de código é importante?
+What do you look for in code reviews?;O que você procura em revisões de código?
+What is test-driven development?;O que é desenvolvimento orientado a testes?
+Do you practice TDD?;Você pratica TDD?
+What types of tests do you write?;Que tipos de testes você escreve?
+What is unit testing?;O que é teste unitário?
+What is integration testing?;O que é teste de integração?
+What is end-to-end testing?;O que é teste end-to-end?
+What testing frameworks have you used?;Quais frameworks de teste você já usou?
+What is JUnit?;O que é JUnit?
+What is Mockito?;O que é Mockito?
+How do you mock dependencies?;Como você mocka dependências?
+What is test coverage?;O que é cobertura de teste?
+What's a good test coverage percentage?;Qual é uma boa porcentagem de cobertura de teste?
+What is refactoring?;O que é refatoração?
+When do you refactor code?;Quando você refatora código?
+What is technical debt?;O que é dívida técnica?
+How do you handle technical debt?;Como você lida com dívida técnica?
+What is a code smell?;O que é um code smell?
+Give examples of code smells.;Dê exemplos de code smells.
+What is clean code?;O que é código limpo?
+What makes code readable?;O que torna código legível?
+How do you name variables?;Como você nomeia variáveis?
+What are coding standards?;O que são padrões de codificação?
+Why are coding standards important?;Por que padrões de codificação são importantes?
+What is pair programming?;O que é pair programming?
+Have you done pair programming?;Você já fez pair programming?
+What is Agile?;O que é Agile?
+What is Scrum?;O que é Scrum?
+What is a sprint?;O que é uma sprint?
+What is a daily standup?;O que é um daily standup?
+What is a retrospective?;O que é uma retrospectiva?
+What is a product backlog?;O que é um product backlog?
+What is a user story?;O que é uma user story?
+What are story points?;O que são story points?
+What is velocity in Agile?;O que é velocidade em Agile?
+Have you worked in Agile teams?;Você já trabalhou em times Agile?
+What is your preferred methodology?;Qual é sua metodologia preferida?
+What is monitoring?;O que é monitoramento?
+How do you monitor applications?;Como você monitora aplicações?
+What is observability?;O que é observabilidade?
+What is logging?;O que é logging?
+What is distributed tracing?;O que é tracing distribuído?
+What metrics do you track?;Quais métricas você rastreia?
+What is Prometheus?;O que é Prometheus?
+What is Grafana?;O que é Grafana?
+How do you handle production incidents?;Como você lida com incidentes de produção?
+What is a postmortem?;O que é um postmortem?
+How do you debug production issues?;Como você debugga problemas de produção?
+What is a hotfix?;O que é um hotfix?
+How do you prioritize bugs?;Como você prioriza bugs?
+What is your debugging process?;Qual é seu processo de debugging?
+How do you approach a new codebase?;Como você aborda uma nova base de código?
+How do you learn new technologies?;Como você aprende novas tecnologias?
+Describe your development workflow.;Descreva seu workflow de desenvolvimento.
+What tools do you use daily?;Quais ferramentas você usa diariamente?
+What is your favorite IDE?;Qual é sua IDE favorita?
+Do you use any productivity tools?;Você usa alguma ferramenta de produtividade?
+What is Big O notation?;O que é notação Big O?
+What is time complexity?;O que é complexidade de tempo?
+What is space complexity?;O que é complexidade de espaço?
+What is an array?;O que é um array?
+What is a linked list?;O que é uma lista encadeada?
+Difference between array and linked list?;Diferença entre array e lista encadeada?
+What is a stack?;O que é uma pilha?
+What is a queue?;O que é uma fila?
+What is a tree?;O que é uma árvore?
+What is a binary tree?;O que é uma árvore binária?
+What is a binary search tree?;O que é uma árvore binária de busca?
+What is a heap?;O que é um heap?
+What is a graph?;O que é um grafo?
+What is BFS?;O que é BFS?
+What is DFS?;O que é DFS?
+What is recursion?;O que é recursão?
+What is dynamic programming?;O que é programação dinâmica?
+What is memoization?;O que é memoização?
+What is a hash table?;O que é uma tabela hash?
+What is binary search?;O que é busca binária?
+What is sorting?;O que é ordenação?
+What sorting algorithms do you know?;Quais algoritmos de ordenação você conhece?
+What is QuickSort?;O que é QuickSort?
+What is MergeSort?;O que é MergeSort?
+What is the best sorting algorithm?;Qual é o melhor algoritmo de ordenação?
+It depends on the use case.;Depende do caso de uso.
+Can you reverse a string?;Você consegue reverter uma string?
+How do you find duplicates in an array?;Como você encontra duplicados em um array?
+How do you check if a string is a palindrome?;Como você verifica se uma string é um palíndromo?
+What is the two-pointer technique?;O que é a técnica de dois ponteiros?
+What is the sliding window technique?;O que é a técnica de janela deslizante?
+Have you solved algorithm problems?;Você já resolveu problemas de algoritmo?
+Do you practice on LeetCode?;Você pratica no LeetCode?
+Let me think out loud.;Deixa eu pensar em voz alta.
+I'll start with a brute force approach.;Vou começar com uma abordagem de força bruta.
+Can we optimize this?;Podemos otimizar isso?
+Let me trace through an example.;Deixa eu traçar um exemplo.
+What are the edge cases?;Quais são os casos extremos?
+Let me write some pseudocode.;Deixa eu escrever algum pseudocódigo.
+I'll need to handle null values.;Vou precisar lidar com valores nulos.
+What if the input is empty?;E se a entrada estiver vazia?
+Let me test with a simple case.;Deixa eu testar com um caso simples.
+I think this solution works.;Acho que esta solução funciona.
+The time complexity is O(n).;A complexidade de tempo é O(n).
+The space complexity is O(1).;A complexidade de espaço é O(1).
+This runs in linear time.;Isso roda em tempo linear.
+This is a logarithmic solution.;Esta é uma solução logarítmica.
+This is quadratic time.;Isso é tempo quadrático.
+We can do better.;Podemos fazer melhor.
+Let me optimize the space.;Deixa eu otimizar o espaço.
+Can I ask a clarifying question?;Posso fazer uma pergunta de esclarecimento?
+What is the expected input size?;Qual é o tamanho esperado da entrada?
+Are there any constraints?;Há alguma restrição?
+Can I use additional data structures?;Posso usar estruturas de dados adicionais?
+Can I modify the input?;Posso modificar a entrada?
+Is the array sorted?;O array está ordenado?
+Are the numbers positive?;Os números são positivos?
+What should I return if there's no solution?;O que devo retornar se não houver solução?
+Let me code this up.;Deixa eu codificar isso.
+I'll implement this in Java.;Vou implementar isso em Java.
+Let me run through the code.;Deixa eu passar pelo código.
+I think there's a bug here.;Acho que há um bug aqui.
+Let me fix this.;Deixa eu corrigir isso.
+I need to handle this edge case.;Preciso lidar com este caso extremo.
+This should work now.;Isso deve funcionar agora.
+Can I test this?;Posso testar isso?
+Let me trace through with this input.;Deixa eu rastrear com esta entrada.
+The output looks correct.;A saída parece correta.
+I'm confident this is right.;Estou confiante que isso está certo.
+Design a URL shortener.;Projete um encurtador de URL.
+How would you design Twitter?;Como você projetaria o Twitter?
+Design a parking lot system.;Projete um sistema de estacionamento.
+How do you scale a system?;Como você escala um sistema?
+What are the scalability considerations?;Quais são as considerações de escalabilidade?
+How would you handle millions of users?;Como você lidaria com milhões de usuários?
+What database would you use?;Que banco de dados você usaria?
+How would you ensure high availability?;Como você garantiria alta disponibilidade?
+What about fault tolerance?;E quanto à tolerância a falhas?
+How do you partition data?;Como você particiona dados?
+What is sharding?;O que é sharding?
+What is replication?;O que é replicação?
+How do you handle data consistency?;Como você lida com consistência de dados?
+What are the trade-offs?;Quais são os trade-offs?
+Let's estimate the scale.;Vamos estimar a escala.
+How many requests per second?;Quantas requisições por segundo?
+What's the read-write ratio?;Qual é a taxa de leitura-escrita?
+How much storage do we need?;Quanto armazenamento precisamos?
+Let me draw the architecture.;Deixa eu desenhar a arquitetura.
+We'll need a load balancer.;Vamos precisar de um load balancer.
+Let's add a cache layer.;Vamos adicionar uma camada de cache.
+We should use a CDN.;Devemos usar uma CDN.
+The database will be the bottleneck.;O banco de dados será o gargalo.
+We can use read replicas.;Podemos usar réplicas de leitura.
+Let's separate reads and writes.;Vamos separar leituras e escritas.
+We need to handle failures gracefully.;Precisamos lidar com falhas de forma elegante.
+What if the database goes down?;E se o banco de dados cair?
+We should have a backup strategy.;Devemos ter uma estratégia de backup.
+How do we monitor this system?;Como monitoramos este sistema?
+What metrics should we track?;Quais métricas devemos rastrear?
+Let's add alerting.;Vamos adicionar alertas.
+We need logging for debugging.;Precisamos de logging para debugging.
+How do we deploy updates?;Como fazemos deploy de atualizações?
+We should use blue-green deployment.;Devemos usar deployment blue-green.
+Let's implement feature flags.;Vamos implementar feature flags.
+We need to version the API.;Precisamos versionar a API.
+How do we handle backward compatibility?;Como lidamos com compatibilidade retroativa?
+Security is important.;Segurança é importante.
+We should encrypt data in transit.;Devemos criptografar dados em trânsito.
+Let's use HTTPS.;Vamos usar HTTPS.
+We need authentication and authorization.;Precisamos de autenticação e autorização.
+Let's implement rate limiting.;Vamos implementar rate limiting.
+We should protect against DDoS.;Devemos proteger contra DDoS.
+Data privacy is a concern.;Privacidade de dados é uma preocupação.
+We need to comply with GDPR.;Precisamos estar em conformidade com GDPR.
+Let's add audit logging.;Vamos adicionar logging de auditoria.
+How do we test this system?;Como testamos este sistema?
+We need integration tests.;Precisamos de testes de integração.
+Load testing is important.;Teste de carga é importante.
+Let's simulate traffic.;Vamos simular tráfego.
+We should test failure scenarios.;Devemos testar cenários de falha.
+Chaos engineering helps.;Engenharia do caos ajuda.
+Let's break things to see what happens.;Vamos quebrar coisas para ver o que acontece.
+We need to be prepared for outages.;Precisamos estar preparados para outages.
+What's the disaster recovery plan?;Qual é o plano de disaster recovery?
+How long is the acceptable downtime?;Quanto tempo de downtime é aceitável?
+What's the RTO and RPO?;Qual é o RTO e RPO?
+We should have runbooks.;Devemos ter runbooks.
+Documentation is crucial.;Documentação é crucial.
+The team needs to understand the system.;O time precisa entender o sistema.
+Let's have clear ownership.;Vamos ter ownership claro.
+Who's on call?;Quem está on call?
+We need a rotation schedule.;Precisamos de um cronograma de rotação.
+Incidents will happen.;Incidentes vão acontecer.
+We learn from failures.;Aprendemos com falhas.
+Postmortems are valuable.;Postmortems são valiosos.
+Let's focus on prevention.;Vamos focar em prevenção.
+Continuous improvement is key.;Melhoria contínua é chave.
+We should iterate on the design.;Devemos iterar no design.
+Nothing is perfect from the start.;Nada é perfeito desde o início.
+We evolve the architecture.;Evoluímos a arquitetura.
+Technology changes.;Tecnologia muda.
+We adapt to new requirements.;Nos adaptamos a novos requisitos.
+Flexibility is important.;Flexibilidade é importante.
+Let's keep it simple.;Vamos manter simples.
+Don't over-engineer.;Não faça over-engineering.
+Build for today's needs.;Construa para as necessidades de hoje.
+Plan for tomorrow's scale.;Planeje para a escala de amanhã.
+Balance is key.;Equilíbrio é chave.
+I think that covers the main points.;Acho que isso cobre os pontos principais.
+Do you have any questions for me?;Você tem alguma pergunta para mim?
+What's the team structure?;Qual é a estrutura do time?
+What does a typical day look like?;Como é um dia típico?
+What technologies does the team use?;Quais tecnologias o time usa?
+What are the biggest challenges?;Quais são os maiores desafios?
+How do you measure success?;Como você mede sucesso?
+What's the onboarding process?;Qual é o processo de onboarding?
+What opportunities for growth are there?;Quais oportunidades de crescimento existem?
+What's the company culture like?;Como é a cultura da empresa?
+How does the team collaborate?;Como o time colabora?
+Are there remote work options?;Há opções de trabalho remoto?
+What's the work-life balance?;Qual é o equilíbrio trabalho-vida?
+When can I expect to hear back?;Quando posso esperar uma resposta?
+What are the next steps?;Quais são os próximos passos?
+Thank you for your time.;Obrigado pelo seu tempo.
+I'm very interested in this opportunity.;Estou muito interessado nesta oportunidade.
+I look forward to hearing from you.;Aguardo seu retorno.
+It was great meeting you.;Foi ótimo conhecer você.
+I enjoyed our conversation.;Gostei da nossa conversa.
+I'm excited about the possibility.;Estou empolgado com a possibilidade.
+I think I'd be a good fit.;Acho que me encaixaria bem.
+I'm ready for the challenge.;Estou pronto para o desafio.
+I'm eager to contribute.;Estou ansioso para contribuir.
+I appreciate the opportunity.;Agradeço a oportunidade.
+What programming languages are you proficient in?;Em quais linguagens de programação você é proficiente?
+How would you rate your Java skills?;Como você avaliaria suas habilidades em Java?
+What's your experience with Spring Framework?;Qual é sua experiência com Spring Framework?
+Have you worked with Spring Boot?;Você já trabalhou com Spring Boot?
+What version of Java do you use?;Qual versão do Java você usa?
+Are you familiar with Java 8 features?;Você está familiarizado com recursos do Java 8?
+What are lambda expressions?;O que são expressões lambda?
+What are streams in Java?;O que são streams em Java?
+What is Optional?;O que é Optional?
+How do you handle exceptions?;Como você lida com exceções?
+What's the difference between checked and unchecked exceptions?;Qual é a diferença entre exceções checked e unchecked?
+What is the try-with-resources statement?;O que é a declaração try-with-resources?
+What are Java generics?;O que são generics em Java?
+Why use generics?;Por que usar generics?
+What is type erasure?;O que é type erasure?
+What are annotations in Java?;O que são anotações em Java?
+Have you created custom annotations?;Você já criou anotações customizadas?
+What is reflection?;O que é reflection?
+When would you use reflection?;Quando você usaria reflection?
+What are the drawbacks of reflection?;Quais são as desvantagens de reflection?
+What is the Java memory model?;O que é o modelo de memória Java?
+What is the heap?;O que é o heap?
+What is the stack?;O que é a stack?
+What is garbage collection?;O que é coleta de lixo?
+How does garbage collection work?;Como funciona a coleta de lixo?
+What GC algorithms do you know?;Quais algoritmos de GC você conhece?
+What is a memory leak?;O que é um vazamento de memória?
+How do you prevent memory leaks?;Como você previne vazamentos de memória?
+What is Spring dependency injection?;O que é injeção de dependência do Spring?
+What's the difference between @Component, @Service, and @Repository?;Qual é a diferença entre @Component, @Service e @Repository?
+What is the Spring Bean lifecycle?;Qual é o ciclo de vida do Spring Bean?
+What is ApplicationContext?;O que é ApplicationContext?
+What is BeanFactory?;O que é BeanFactory?
+Difference between ApplicationContext and BeanFactory?;Diferença entre ApplicationContext e BeanFactory?
+What is Spring AOP?;O que é Spring AOP?
+What is aspect-oriented programming?;O que é programação orientada a aspectos?
+What are cross-cutting concerns?;O que são cross-cutting concerns?
+Have you used Spring Data JPA?;Você já usou Spring Data JPA?
+What is JPA?;O que é JPA?
+What is Hibernate?;O que é Hibernate?
+Difference between JPA and Hibernate?;Diferença entre JPA e Hibernate?
+What is an entity in JPA?;O que é uma entidade em JPA?
+What are JPA relationships?;Quais são os relacionamentos JPA?
+What is lazy loading?;O que é lazy loading?
+What is eager loading?;O que é eager loading?
+When to use lazy vs eager loading?;Quando usar lazy vs eager loading?
+What is the N+1 problem?;O que é o problema N+1?
+How do you solve the N+1 problem?;Como você resolve o problema N+1?
+What is a DTO?;O que é um DTO?
+Why use DTOs?;Por que usar DTOs?
+What is the difference between DTO and Entity?;Qual é a diferença entre DTO e Entity?
+How do you map DTOs to entities?;Como você mapeia DTOs para entidades?
+Have you used MapStruct?;Você já usou MapStruct?
+What is Spring MVC?;O que é Spring MVC?
+What is a controller?;O que é um controller?
+What is @RestController?;O que é @RestController?
+Difference between @Controller and @RestController?;Diferença entre @Controller e @RestController?
+What is @RequestMapping?;O que é @RequestMapping?
+What are the HTTP methods?;Quais são os métodos HTTP?
+When do you use GET vs POST?;Quando você usa GET vs POST?
+What is @PathVariable?;O que é @PathVariable?
+What is @RequestParam?;O que é @RequestParam?
+What is @RequestBody?;O que é @RequestBody?
+How do you validate request data?;Como você valida dados de requisição?
+What is Bean Validation?;O que é Bean Validation?
+What validation annotations do you know?;Quais anotações de validação você conhece?
+What is @Valid?;O que é @Valid?
+What is exception handling in Spring?;O que é tratamento de exceções no Spring?
+What is @ControllerAdvice?;O que é @ControllerAdvice?
+What is @ExceptionHandler?;O que é @ExceptionHandler?
+How do you handle global exceptions?;Como você lida com exceções globais?
+What is Spring Security?;O que é Spring Security?
+How do you secure a REST API?;Como você protege uma REST API?
+What is Basic Authentication?;O que é Basic Authentication?
+What is Bearer Token authentication?;O que é autenticação Bearer Token?
+How do you implement JWT in Spring?;Como você implementa JWT no Spring?
+What is a filter in Spring Security?;O que é um filtro no Spring Security?
+What is the filter chain?;O que é a cadeia de filtros?
+What is CSRF protection?;O que é proteção CSRF?
+When do you disable CSRF?;Quando você desabilita CSRF?
+What is session management?;O que é gerenciamento de sessão?
+What is stateless authentication?;O que é autenticação stateless?
+What is Spring Boot auto-configuration?;O que é auto-configuração do Spring Boot?
+What is application.properties?;O que é application.properties?
+What is application.yml?;O que é application.yml?
+Difference between .properties and .yml?;Diferença entre .properties e .yml?
+What is a Spring profile?;O que é um perfil do Spring?
+How do you activate profiles?;Como você ativa perfis?
+What is Spring Actuator?;O que é Spring Actuator?
+What endpoints does Actuator provide?;Quais endpoints o Actuator fornece?
+What is the /health endpoint?;O que é o endpoint /health?
+What is the /metrics endpoint?;O que é o endpoint /metrics?
+How do you customize Actuator endpoints?;Como você customiza endpoints do Actuator?
+What is externalized configuration?;O que é configuração externalizada?
+How do you inject configuration values?;Como você injeta valores de configuração?
+What is @Value annotation?;O que é a anotação @Value?
+What is @ConfigurationProperties?;O que é @ConfigurationProperties?
+Difference between @Value and @ConfigurationProperties?;Diferença entre @Value e @ConfigurationProperties?
+What is Spring Cloud?;O que é Spring Cloud?
+What is service discovery?;O que é service discovery?
+What is Eureka?;O que é Eureka?
+What is a config server?;O que é um config server?
+What is an API Gateway?;O que é um API Gateway?
+What is Spring Cloud Gateway?;O que é Spring Cloud Gateway?
+What is circuit breaker pattern?;O que é o padrão circuit breaker?
+What is Hystrix?;O que é Hystrix?
+What is Resilience4j?;O que é Resilience4j?
+How do you handle service failures?;Como você lida com falhas de serviço?
+What is distributed tracing?;O que é tracing distribuído?
+What is Zipkin?;O que é Zipkin?
+What is Sleuth?;O que é Sleuth?
+How do you correlate logs across services?;Como você correlaciona logs entre serviços?
+What is eventual consistency?;O que é consistência eventual?
+What is the saga pattern?;O que é o padrão saga?
+What is event-driven architecture?;O que é arquitetura orientada a eventos?
+Have you worked with message brokers?;Você já trabalhou com message brokers?
+What is Apache Kafka?;O que é Apache Kafka?
+What is a Kafka topic?;O que é um tópico Kafka?
+What is a partition in Kafka?;O que é uma partição no Kafka?
+What is a consumer group?;O que é um consumer group?
+How does Kafka ensure message ordering?;Como o Kafka garante ordem de mensagens?
+What is offset in Kafka?;O que é offset no Kafka?
+What is at-least-once delivery?;O que é entrega at-least-once?
+What is exactly-once semantics?;O que é semântica exactly-once?
+What is RabbitMQ?;O que é RabbitMQ?
+Difference between Kafka and RabbitMQ?;Diferença entre Kafka e RabbitMQ?
+What is a queue?;O que é uma fila?
+What is a topic?;O que é um tópico?
+What is publish-subscribe pattern?;O que é o padrão publish-subscribe?
+What is request-reply pattern?;O que é o padrão request-reply?
+How do you handle message failures?;Como você lida com falhas de mensagens?
+What is a dead letter queue?;O que é uma dead letter queue?
+What is database indexing?;O que é indexação de banco de dados?
+When should you create an index?;Quando você deve criar um índice?
+What's the downside of too many indexes?;Qual é a desvantagem de muitos índices?
+What is a composite index?;O que é um índice composto?
+What is query optimization?;O que é otimização de query?
+What is an execution plan?;O que é um plano de execução?
+How do you analyze slow queries?;Como você analisa queries lentas?
+What is database denormalization?;O que é desnormalização de banco de dados?
+When would you denormalize?;Quando você desnormalizaria?
+What is CQRS?;O que é CQRS?
+What is event sourcing?;O que é event sourcing?
+What are the benefits of event sourcing?;Quais são os benefícios de event sourcing?
+What are the challenges?;Quais são os desafios?
+What is optimistic locking?;O que é bloqueio otimista?
+What is pessimistic locking?;O que é bloqueio pessimista?
+When to use optimistic vs pessimistic locking?;Quando usar bloqueio otimista vs pessimista?
+What is a race condition?;O que é uma race condition?
+How do you prevent race conditions?;Como você previne race conditions?
+What is idempotency?;O que é idempotência?
+Why is idempotency important?;Por que idempotência é importante?
+How do you make an operation idempotent?;Como você torna uma operação idempotente?
